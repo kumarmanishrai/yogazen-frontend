@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCartWishlist } from '../context/CartWishlistContext';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,10 +9,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { currentUser, role, isLoggedIn, logout, openAuthModal } = useAuth();
-
-  // Dummy badge counts for state
-  const cartCount = 2;
-  const wishlistCount = 3;
+  const { cartCount, wishlistCount } = useCartWishlist();
 
   const handleSearch = (e) => {
     e.preventDefault();

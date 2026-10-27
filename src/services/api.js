@@ -56,3 +56,56 @@ export const apiGetTrainerProfile = () =>
 
 export const apiLogoutTrainer = () =>
   request('/trainer/logout', { method: 'POST' });
+
+// Cart Endpoints
+export const apiGetCart = () =>
+  request('/cart', { method: 'GET' });
+
+export const apiAddToCart = (productId, quantity = 1) =>
+  request('/cart/add', { method: 'POST', body: JSON.stringify({ productId, quantity }) });
+
+export const apiUpdateCartItem = (productId, quantity) =>
+  request('/cart/update', { method: 'PUT', body: JSON.stringify({ productId, quantity }) });
+
+export const apiRemoveFromCart = (productId) =>
+  request(`/cart/remove/${productId}`, { method: 'DELETE' });
+
+export const apiClearCart = () =>
+  request('/cart/clear', { method: 'DELETE' });
+
+// Wishlist Endpoints
+export const apiGetWishlist = () =>
+  request('/wishlist', { method: 'GET' });
+
+export const apiAddToWishlist = (productId) =>
+  request('/wishlist/add', { method: 'POST', body: JSON.stringify({ productId }) });
+
+export const apiToggleWishlist = (productId) =>
+  request('/wishlist/toggle', { method: 'POST', body: JSON.stringify({ productId }) });
+
+export const apiRemoveFromWishlist = (productId) =>
+  request(`/wishlist/remove/${productId}`, { method: 'DELETE' });
+
+export const apiMoveWishlistToCart = (productId, quantity = 1) =>
+  request('/wishlist/move-to-cart', { method: 'POST', body: JSON.stringify({ productId, quantity }) });
+
+export const apiClearWishlist = () =>
+  request('/wishlist/clear', { method: 'DELETE' });
+
+// Admin Inventory Endpoints
+export const apiAdminGetProducts = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request(`/admin/products${query ? `?${query}` : ''}`, { method: 'GET' });
+};
+
+export const apiAdminAddProduct = (productData) =>
+  request('/admin/products', { method: 'POST', body: JSON.stringify(productData) });
+
+export const apiAdminUpdateProduct = (id, productData) =>
+  request(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(productData) });
+
+export const apiAdminUpdateStock = (id, stockData) =>
+  request(`/admin/products/${id}/stock`, { method: 'PATCH', body: JSON.stringify(stockData) });
+
+export const apiAdminDeleteProduct = (id) =>
+  request(`/admin/products/${id}`, { method: 'DELETE' });
