@@ -16,6 +16,11 @@ import TrainerDashboard from './pages/TrainerDashboard';
 import UserProfile from './pages/UserProfile';
 import TrainerProfile from './pages/TrainerProfile';
 import AdminInventory from './pages/AdminInventory';
+import AdminComplaints from './pages/AdminComplaints';
+import ProductDetail from './pages/ProductDetail';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
 
 function App() {
   return (
@@ -26,6 +31,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/login" element={<Login />} />
@@ -35,7 +41,11 @@ function App() {
               <Route path="/trainer/profile" element={<TrainerProfile />} />
               <Route path="/trainer/dashboard" element={<TrainerDashboard />} />
               <Route path="/admin/inventory" element={<AdminInventory />} />
+              <Route path="/admin/complaints" element={<AdminComplaints />} />
               <Route path="/admin" element={<AdminInventory />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
             </Routes>
 
             {/* Global Auth Modal for Protected Actions */}

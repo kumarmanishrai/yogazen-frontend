@@ -16,6 +16,11 @@ const Footer = () => {
             <p className="text-sm text-gray-500 leading-relaxed">
               Curating authentic yogic traditions, ethical wellness gear, and transformative training sessions for your holistic journey.
             </p>
+            <div>
+              <Link to="/about" className="text-xs font-semibold text-saffron-600 hover:text-saffron-700 underline underline-offset-2">
+                About YogaZen →
+              </Link>
+            </div>
           </div>
 
           {/* Shop Links */}
@@ -65,10 +70,10 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-saffron-100/60 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
           <p>© {new Date().getFullYear()} YogaZen. Mindful Living & Learning. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="#privacy" className="hover:text-saffron-600">Privacy Policy</a>
-            <a href="#terms" className="hover:text-saffron-600">Terms of Service</a>
-            <a href="#contact" className="hover:text-saffron-600">Support</a>
+          <div className="flex flex-wrap items-center gap-6">
+            <Link to="/about" className="hover:text-saffron-600 transition">About Us</Link>
+            <Link to="/privacy" className="hover:text-saffron-600 transition">Privacy Policy</Link>
+            <Link to="/contact" className="hover:text-saffron-600 transition">Contact Us & Support</Link>
           </div>
         </div>
       </div>

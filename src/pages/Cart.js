@@ -156,9 +156,9 @@ const Cart = () => {
                         {/* Product Image & Title */}
                         <div className="flex items-center gap-4 flex-1">
                           <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-saffron-50/60 border border-saffron-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                            {product.thumbnail || product.images?.[0] ? (
+                            {item.varietyImage || product.thumbnail || product.images?.[0] ? (
                               <img
-                                src={product.thumbnail || product.images[0]}
+                                src={item.varietyImage || product.thumbnail || product.images[0]}
                                 alt={product.title}
                                 className="w-full h-full object-cover"
                               />
@@ -174,6 +174,11 @@ const Cart = () => {
                             <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
                               {product.title || 'Wellness Product'}
                             </h3>
+                            {item.varietyName && (
+                              <p className="text-xs text-gray-500 font-medium">
+                                Option: <span className="text-gray-800 font-semibold">{item.varietyName}</span>
+                              </p>
+                            )}
 
                             {/* Stock Status Badge */}
                             <div>

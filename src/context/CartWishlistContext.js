@@ -91,9 +91,9 @@ export const CartWishlistProvider = ({ children }) => {
   }, [isLoggedIn, role, refreshCart, refreshWishlist]);
 
   // Add to Cart
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, varietyData = {}) => {
     try {
-      const res = await apiAddToCart(productId, quantity);
+      const res = await apiAddToCart(productId, quantity, varietyData);
       if (res?.success) {
         setCart(res.cart || []);
         if (res.summary) setSummary(res.summary);

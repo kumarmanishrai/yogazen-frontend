@@ -137,6 +137,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update current user in state & localStorage
+  const updateCurrentUser = (updatedData) => {
+    setCurrentUser((prev) => {
+      const merged = { ...prev, ...updatedData };
+      localStorage.setItem('yogazen_user', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   const value = {
     currentUser,
     role,
@@ -146,6 +155,7 @@ export const AuthProvider = ({ children }) => {
     registerUser,
     registerTrainer,
     logout,
+    updateCurrentUser,
     isAuthModalOpen,
     authModalReason,
     openAuthModal,

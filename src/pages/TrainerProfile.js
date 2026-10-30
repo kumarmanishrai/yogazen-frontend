@@ -1,26 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { apiUpdateTrainerProfile, apiUpdateTrainerPayout } from '../services/api';
 
 const TrainerProfile = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, role, isLoggedIn, isLoading, openAuthModal, updateCurrentUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'payout'
 
   // Trainer Info State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState('');
   const [trainerData, setTrainerData] = useState({
-    name: currentUser?.name || 'Guru Devanshu Sharma',
-    email: currentUser?.email || 'devanshu.yoga@yogazen.com',
-    contact: currentUser?.contact || '+91 98111 22334',
-    headline: 'Senior Ashtanga & Breathwork Master (ERYT-500)',
-    bio: 'Dedicated practitioner of classical Himalayan Hatha & Ashtanga Vinyasa for over 12 years. Certified from Rishikesh Yog Peeth. Passionate about guiding modern souls toward mindful stillness and bodily vigor.',
-    experienceYears: currentUser?.experienceYears || 12,
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+    contact: currentUser?.contact || '',
+    headline: currentUser?.headline || '',
+    bio: currentUser?.bio || '',
+    experienceYears: currentUser?.experienceYears ?? '',
     isApproved: currentUser?.isApproved ?? false,
-    categories: currentUser?.categories?.length > 0 ? currentUser.categories : ['Hatha Yoga', 'Pranayama', 'Ashtanga Vinyasa', 'Meditation'],
+    categories: Array.isArray(currentUser?.categories) ? currentUser.categories : [],
   });
 
   // Tag Input State
@@ -28,15 +30,36 @@ const TrainerProfile = () => {
 
   // Payout Details State
   const [isEditingPayout, setIsEditingPayout] = useState(false);
+  const [isSavingPayout, setIsSavingPayout] = useState(false);
   const [payoutMessage, setPayoutMessage] = useState('');
   const [payoutData, setPayoutData] = useState({
-    accountHolderName: currentUser?.payoutDetails?.accountHolderName || 'Devanshu Sharma',
-    accountNumber: currentUser?.payoutDetails?.accountNumber || '91823746192837',
-    ifscCode: currentUser?.payoutDetails?.ifscCode || 'HDFC0001234',
-    upiId: currentUser?.payoutDetails?.upiId || 'devanshu@okaxis',
+    accountHolderName: currentUser?.payoutDetails?.accountHolderName || '',
+    accountNumber: currentUser?.payoutDetails?.accountNumber || '',
+    ifscCode: currentUser?.payoutDetails?.ifscCode || '',
+    upiId: currentUser?.payoutDetails?.upiId || '',
   });
 
-
+  // Sync state if currentUser changes or loads from session
+  useEffect(() => {
+    if (currentUser) {
+      setTrainerData({
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        contact: currentUser.contact || '',
+        headline: currentUser.headline || '',
+        bio: currentUser.bio || '',
+        experienceYears: currentUser.experienceYears ?? '',
+        isApproved: currentUser.isApproved ?? false,
+        categories: Array.isArray(currentUser.categories) ? currentUser.categories : [],
+      });
+      setPayoutData({
+        accountHolderName: currentUser.payoutDetails?.accountHolderName || '',
+        accountNumber: currentUser.payoutDetails?.accountNumber || '',
+        ifscCode: currentUser.payoutDetails?.ifscCode || '',
+        upiId: currentUser.payoutDetails?.upiId || '',
+      });
+    }
+  }, [currentUser]);
 
   // Handle Tag Management
   const handleAddTag = (e) => {
@@ -59,22 +82,133 @@ const TrainerProfile = () => {
   };
 
   // Save Profile Handler
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setIsEditingProfile(false);
-    setProfileMessage('Trainer profile updated successfully!');
-    setTimeout(() => setProfileMessage(''), 3000);
+    try {
+      setIsSavingProfile(true);
+      setProfileMessage('');
+      const res = await apiUpdateTrainerProfile({
+        name: trainerData.name,
+        contact: trainerData.contact,
+        headline: trainerData.headline,
+        bio: trainerData.bio,
+        experienceYears: trainerData.experienceYears,
+        categories: trainerData.categories,
+      });
+      if (res?.trainer) {
+        if (updateCurrentUser) updateCurrentUser(res.trainer);
+        setProfileMessage('Trainer profile updated successfully!');
+        setIsEditingProfile(false);
+        setTimeout(() => setProfileMessage(''), 3000);
+      }
+    } catch (err) {
+      setProfileMessage(`Error: ${err.message || 'Failed to update profile'}`);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   // Save Payout Handler
-  const handleSavePayout = (e) => {
+  const handleSavePayout = async (e) => {
     e.preventDefault();
-    setIsEditingPayout(false);
-    setPayoutMessage('Payout & bank details saved successfully!');
-    setTimeout(() => setPayoutMessage(''), 3000);
+    try {
+      setIsSavingPayout(true);
+      setPayoutMessage('');
+      const res = await apiUpdateTrainerPayout(payoutData);
+      if (res?.payoutDetails) {
+        if (updateCurrentUser) updateCurrentUser({ payoutDetails: res.payoutDetails });
+        setPayoutMessage('Payout & bank details saved successfully!');
+        setIsEditingPayout(false);
+        setTimeout(() => setPayoutMessage(''), 3000);
+      }
+    } catch (err) {
+      setPayoutMessage(`Error: ${err.message || 'Failed to update payout details'}`);
+    } finally {
+      setIsSavingPayout(false);
+    }
   };
 
 
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col justify-between font-nunito">
+        <Navbar />
+        <div className="py-32 text-center">
+          <div className="w-12 h-12 border-4 border-saffron-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs font-semibold text-gray-500">Checking credentials...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Guest Barrier
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex flex-col justify-between font-nunito">
+        <Navbar />
+        <main className="max-w-xl mx-auto px-4 py-24 text-center">
+          <div className="p-8 sm:p-12 bg-white rounded-3xl border border-gray-200 shadow-sm">
+            <span className="text-5xl">🧘‍♂️</span>
+            <h1 className="text-2xl font-black text-gray-900 mt-4">Trainer Sign In Required</h1>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              Please sign in with your instructor credentials to manage your verified bio, credentials, and payout methods.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => openAuthModal('Please sign in with your Trainer account.')}
+                className="w-full sm:w-auto px-6 py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+              >
+                Sign In as Trainer
+              </button>
+              <Link
+                to="/trainer/register"
+                className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+              >
+                Register as Instructor
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Regular User Barrier
+  if (role !== 'trainer') {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex flex-col justify-between font-nunito">
+        <Navbar />
+        <main className="max-w-xl mx-auto px-4 py-24 text-center">
+          <div className="p-8 sm:p-12 bg-white rounded-3xl border border-gray-200 shadow-sm">
+            <span className="text-5xl">🔒</span>
+            <h1 className="text-2xl font-black text-gray-900 mt-4">Access Restricted: Trainer Portal</h1>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              You are currently signed in as a <span className="font-bold text-gray-800">Practitioner (User Account)</span>.
+              The Trainer Profile is reserved for verified instructors.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/profile"
+                className="w-full sm:w-auto px-6 py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-xs transition"
+              >
+                Go to Your User Profile
+              </Link>
+              <Link
+                to="/trainer/register"
+                className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+              >
+                Apply to Teach on YogaZen 🌿
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/60 flex flex-col justify-between">
@@ -86,18 +220,18 @@ const TrainerProfile = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-saffron-100 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-5">
               <div className="w-20 h-20 rounded-full bg-saffron-600 flex items-center justify-center text-white text-3xl font-black shadow-md shadow-saffron-600/20">
-                🧘‍♂️
+                {trainerData.name ? trainerData.name.charAt(0).toUpperCase() : '🧘‍♂️'}
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900">{trainerData.name || 'Trainer Profile'}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{trainerData.name || 'Instructor Profile'}</h1>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-saffron-100 text-saffron-800">
                     Certified Trainer
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">{trainerData.headline}</p>
+                <p className="text-sm text-gray-500">{trainerData.headline || 'No professional title set yet'}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {trainerData.experienceYears} Years Experience • {trainerData.categories.length} Specializations
+                  {trainerData.experienceYears !== '' ? `${trainerData.experienceYears} Years Experience` : 'Experience not set'} • {trainerData.categories.length} Specializations
                 </p>
               </div>
             </div>
@@ -124,6 +258,31 @@ const TrainerProfile = () => {
               </Link>
             </div>
           </div>
+
+          {/* Profile Completeness Alert */}
+          {!Boolean(trainerData.name?.trim() && trainerData.contact?.trim() && trainerData.bio?.trim() && trainerData.categories?.length > 0) && (
+            <div className="mb-8 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl shrink-0">
+                  ⚠️
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-amber-900">Your Instructor Profile is Incomplete</h3>
+                  <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                    Please provide your <strong>Full Name</strong>, <strong>Contact Phone</strong>, <strong>Biography</strong>, and at least one <strong>Specialization Tag</strong>. Course creation is blocked until your profile is completed.
+                  </p>
+                </div>
+              </div>
+              {!isEditingProfile && (
+                <button
+                  onClick={() => { setActiveTab('profile'); setIsEditingProfile(true); }}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs transition whitespace-nowrap text-center"
+                >
+                  Complete Profile Now
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Navigation Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 border-b border-gray-200">
@@ -272,9 +431,10 @@ const TrainerProfile = () => {
                   <div className="flex gap-3 pt-3">
                     <button
                       type="submit"
-                      className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                      disabled={isSavingProfile}
+                      className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50"
                     >
-                      Save Profile
+                      {isSavingProfile ? 'Saving...' : 'Save Profile'}
                     </button>
                     <button
                       type="button"
@@ -289,36 +449,52 @@ const TrainerProfile = () => {
                 <div className="space-y-6 text-sm">
                   <div>
                     <span className="text-xs text-gray-400 uppercase font-bold block mb-1">Headline</span>
-                    <p className="text-gray-900 font-semibold">{trainerData.headline}</p>
+                    <p className="text-gray-900 font-semibold">
+                      {trainerData.headline || <span className="text-gray-400 italic font-normal">No headline set yet (e.g. Master Instructor in Ashtanga & Pranayama)</span>}
+                    </p>
                   </div>
 
                   <div>
                     <span className="text-xs text-gray-400 uppercase font-bold block mb-1">About the Instructor</span>
-                    <p className="text-gray-700 leading-relaxed">{trainerData.bio}</p>
+                    {trainerData.bio ? (
+                      <p className="text-gray-700 leading-relaxed">{trainerData.bio}</p>
+                    ) : (
+                      <p className="text-gray-400 italic">
+                        No instructor biography provided yet. Click "Edit Profile" to share your journey, lineage, and teaching philosophy with your students.
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <span className="text-xs text-gray-400 uppercase font-bold block mb-2">Teaching Specializations</span>
-                    <div className="flex flex-wrap gap-2">
-                      {trainerData.categories.map((cat) => (
-                        <span
-                          key={cat}
-                          className="px-3 py-1 rounded-full bg-saffron-50 text-saffron-700 border border-saffron-200 text-xs font-bold"
-                        >
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
+                    {trainerData.categories.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {trainerData.categories.map((cat) => (
+                          <span
+                            key={cat}
+                            className="px-3 py-1 rounded-full bg-saffron-50 text-saffron-700 border border-saffron-200 text-xs font-bold"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 italic text-xs">
+                        No specialization tags added yet (e.g. Hatha Yoga, Pranayama, Meditation).
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-4 text-xs">
                     <div>
                       <span className="text-gray-400 block font-medium">Email</span>
-                      <span className="text-gray-800 font-bold">{trainerData.email}</span>
+                      <span className="text-gray-800 font-bold">{trainerData.email || 'Not provided'}</span>
                     </div>
                     <div>
                       <span className="text-gray-400 block font-medium">Phone</span>
-                      <span className="text-gray-800 font-bold">{trainerData.contact || 'Not provided'}</span>
+                      <span className="text-gray-800 font-bold">
+                        {trainerData.contact || <span className="text-gray-400 italic font-normal">Not provided yet</span>}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -359,6 +535,7 @@ const TrainerProfile = () => {
                       value={payoutData.accountHolderName}
                       onChange={(e) => setPayoutData({ ...payoutData, accountHolderName: e.target.value })}
                       required
+                      placeholder="Name as registered with your bank"
                       className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm"
                     />
                   </div>
@@ -401,9 +578,10 @@ const TrainerProfile = () => {
                   <div className="flex gap-3 pt-3">
                     <button
                       type="submit"
-                      className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                      disabled={isSavingPayout}
+                      className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50"
                     >
-                      Save Payout Details
+                      {isSavingPayout ? 'Saving...' : 'Save Payout Details'}
                     </button>
                     <button
                       type="button"
@@ -415,26 +593,41 @@ const TrainerProfile = () => {
                   </div>
                 </form>
               ) : (
-                <div className="space-y-4 text-sm divide-y divide-gray-100">
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-gray-500 text-xs font-medium">Account Holder</span>
-                    <span className="font-semibold text-gray-900">{payoutData.accountHolderName || 'Not configured'}</span>
-                  </div>
-                  <div className="pt-3 flex justify-between">
-                    <span className="text-gray-500 text-xs font-medium">Bank Account</span>
-                    <span className="font-semibold text-gray-900">
-                      {payoutData.accountNumber ? `•••• •••• ${payoutData.accountNumber.slice(-4)}` : 'Not configured'}
-                    </span>
-                  </div>
-                  <div className="pt-3 flex justify-between">
-                    <span className="text-gray-500 text-xs font-medium">IFSC Code</span>
-                    <span className="font-semibold text-gray-900">{payoutData.ifscCode || 'Not configured'}</span>
-                  </div>
-                  <div className="pt-3 flex justify-between">
-                    <span className="text-gray-500 text-xs font-medium">UPI ID</span>
-                    <span className="font-semibold text-gray-900">{payoutData.upiId || 'Not configured'}</span>
-                  </div>
-                </div>
+                <>
+                  {!payoutData.accountHolderName && !payoutData.accountNumber && !payoutData.ifscCode && !payoutData.upiId ? (
+                    <div className="text-center py-8">
+                      <span className="text-3xl">💳</span>
+                      <p className="text-gray-500 text-xs mt-2">No bank or UPI payout account linked yet.</p>
+                      <button
+                        onClick={() => setIsEditingPayout(true)}
+                        className="mt-3 px-4 py-2 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                      >
+                        + Set Up Direct Payouts
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 text-sm divide-y divide-gray-100">
+                      <div className="pt-2 flex justify-between">
+                        <span className="text-gray-500 text-xs font-medium">Account Holder</span>
+                        <span className="font-semibold text-gray-900">{payoutData.accountHolderName || 'Not configured'}</span>
+                      </div>
+                      <div className="pt-3 flex justify-between">
+                        <span className="text-gray-500 text-xs font-medium">Bank Account</span>
+                        <span className="font-semibold text-gray-900">
+                          {payoutData.accountNumber ? `•••• •••• ${payoutData.accountNumber.slice(-4)}` : 'Not configured'}
+                        </span>
+                      </div>
+                      <div className="pt-3 flex justify-between">
+                        <span className="text-gray-500 text-xs font-medium">IFSC Code</span>
+                        <span className="font-semibold text-gray-900">{payoutData.ifscCode || 'Not configured'}</span>
+                      </div>
+                      <div className="pt-3 flex justify-between">
+                        <span className="text-gray-500 text-xs font-medium">UPI ID</span>
+                        <span className="font-semibold text-gray-900">{payoutData.upiId || 'Not configured'}</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
