@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useCartWishlist } from '../context/CartWishlistContext';
+import { useNotification } from '../context/NotificationContext';
 
 const Wishlist = () => {
   const { isLoggedIn, openAuthModal } = useAuth();
+  const { showConfirm, showNotification } = useNotification();
   const {
     wishlist,
     isWishlistLoading,
@@ -14,12 +16,6 @@ const Wishlist = () => {
     moveWishlistToCart,
     clearWishlist
   } = useCartWishlist();
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      openAuthModal('Please sign in to view your saved wishlist.');
-    }
-  }, [isLoggedIn, openAuthModal]);
 
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col justify-between font-nunito">
@@ -41,10 +37,17 @@ const Wishlist = () => {
               </p>
             </div>
 
-            {isLoggedIn && wishlist.length > 0 && (
+            {wishlist.length > 0 && (
               <button
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to clear your entire wishlist?')) {
+                onClick={async () => {
+                  const confirmed = await showConfirm({
+                    title: 'Clear Wishlist',
+                    message: 'Are you sure you want to clear your entire wishlist?',
+                    confirmText: 'Clear Wishlist',
+                    cancelText: 'Keep Items',
+                    type: 'danger'
+                  });
+                  if (confirmed) {
                     clearWishlist();
                   }
                 }}
@@ -55,28 +58,24 @@ const Wishlist = () => {
             )}
           </div>
 
-          {/* Guest State */}
-          {!isLoggedIn ? (
-            <div className="mt-12 p-8 sm:p-12 max-w-lg mx-auto bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
-              <span className="text-5xl">🧘</span>
-              <h2 className="text-xl font-bold text-gray-900 mt-4">Save Your Favorite Items</h2>
-              <p className="text-sm text-gray-600 mt-2">
-                Sign in to view your saved yoga gear, meditation tools, and mindful wellness items across all your devices.
-              </p>
+          {/* Guest Notice Pill */}
+          {!isLoggedIn && wishlist.length > 0 && (
+            <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-base">💡</span>
+                <span>You are browsing as a guest. Your wishlist is safely saved on this device. Sign in anytime to sync across devices.</span>
+              </div>
               <button
-                onClick={() => openAuthModal('Please sign in to view your saved wishlist.')}
-                className="mt-6 w-full py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-bold rounded-xl shadow-md transition text-sm"
+                type="button"
+                onClick={() => openAuthModal('Sign in to sync your wishlist.')}
+                className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition shrink-0 self-start sm:self-auto"
               >
-                Sign In to View Wishlist
+                Sign In
               </button>
-              <Link
-                to="/products"
-                className="inline-block mt-4 text-xs font-bold text-saffron-600 hover:underline"
-              >
-                Continue browsing store &rarr;
-              </Link>
             </div>
-          ) : isWishlistLoading && wishlist.length === 0 ? (
+          )}
+
+          {isWishlistLoading && wishlist.length === 0 ? (
             /* Loading State */
             <div className="py-20 text-center">
               <div className="w-10 h-10 border-4 border-saffron-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
@@ -174,7 +173,12 @@ const Wishlist = () => {
                     {/* Actions */}
                     <div className="p-4 pt-0">
                       <button
-                        onClick={() => moveWishlistToCart(prodId, 1)}
+                        onClick={async () => {
+                          const res = await moveWishlistToCart(prodId, 1);
+                          if (res?.success) {
+                            showNotification('Item moved from wishlist to cart! 🛒', 'success');
+                          }
+                        }}
                         disabled={isOutOfStock}
                         className={`w-full py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 ${
                           isOutOfStock

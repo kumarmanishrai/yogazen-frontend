@@ -4,8 +4,417 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
 
+/* ============================================================ */
+/* 🌓 THEME ENGINE: UNIVERSAL LIGHT & DARK MODE SYSTEM          */
+/* ============================================================ */
+
+/* Base Typography & Defaults */
 body {
   font-family: 'Nunito', sans-serif;
   margin: 0;
   background-color: #ffffff;
+  color: #1c1917;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html {
+  color-scheme: light;
+}
+
+/* ============================================================ */
+/* 🌙 DARK MODE (Triggered when html has .dark class)          */
+/* Rich Charcoal & Stone Greyish Palette (No Slate Blue)        */
+/* ============================================================ */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0c0a09 !important; /* stone-950 deep warm charcoal */
+  color: #f5f5f4 !important; /* stone-100 */
+}
+
+/* Public & Generic Page Backgrounds in Dark Mode */
+html.dark .bg-white,
+html.dark [class*="bg-white/"],
+html.dark [class*="bg-[#FDFBF7]"],
+html.dark [class*="bg-[#fbfbfb]"],
+html.dark [class*="bg-[#fafafa]"],
+html.dark .bg-neutral-50 {
+  background-color: #1c1917 !important; /* stone-900 warm charcoal card */
+}
+
+html.dark .min-h-screen.bg-white,
+html.dark .min-h-screen[class*="bg-[#FDFBF7]"],
+html.dark .min-h-screen.bg-neutral-50,
+html.dark main.bg-white {
+  background-color: #0c0a09 !important; /* stone-950 */
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-50\/50,
+html.dark .bg-gray-50\/60,
+html.dark .bg-gray-50\/70,
+html.dark .bg-gray-50\/80,
+html.dark .bg-stone-50,
+html.dark .bg-slate-50,
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/40,
+html.dark .bg-orange-50 {
+  background-color: #0c0a09 !important;
+}
+
+html.dark .bg-gray-100,
+html.dark .bg-stone-100,
+html.dark .bg-slate-100 {
+  background-color: #292524 !important; /* stone-800 */
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-stone-200 {
+  background-color: #44403c !important; /* stone-700 */
+}
+
+/* Saffron tint backgrounds in dark mode */
+html.dark .bg-saffron-50,
+html.dark .bg-saffron-50\/40 {
+  background-color: rgba(249, 115, 22, 0.12) !important;
+}
+
+html.dark .bg-saffron-100 {
+  background-color: rgba(249, 115, 22, 0.22) !important;
+}
+
+/* Text Colors in Dark Mode */
+html.dark .text-gray-900,
+html.dark .text-stone-900,
+html.dark .text-gray-800,
+html.dark .text-stone-800,
+html.dark .text-black,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #f5f5f4 !important; /* stone-100 */
+}
+
+html.dark .text-gray-700,
+html.dark .text-stone-700,
+html.dark .text-gray-600,
+html.dark .text-stone-600 {
+  color: #d6d3d1 !important; /* stone-300 */
+}
+
+html.dark .text-gray-500,
+html.dark .text-stone-500,
+html.dark .text-gray-400 {
+  color: #a8a29e !important; /* stone-400 */
+}
+
+/* Borders in Dark Mode */
+html.dark .border-gray-100,
+html.dark .border-stone-100,
+html.dark .border-gray-200,
+html.dark .border-stone-200,
+html.dark .border-gray-300,
+html.dark .border-stone-300,
+html.dark .border-saffron-100,
+html.dark .border-saffron-100\/60,
+html.dark .border-saffron-200 {
+  border-color: #292524 !important; /* stone-800 */
+}
+
+html.dark .divide-gray-100 > * + *,
+html.dark .divide-gray-200 > * + *,
+html.dark .divide-stone-100 > * + * {
+  border-color: #292524 !important;
+}
+
+/* Inputs & Form Controls in Dark Mode */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1c1917 !important;
+  color: #f5f5f4 !important;
+  border-color: #44403c !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #78716c !important; /* stone-500 */
+}
+
+/* Navigation & Header in Dark Mode */
+html.dark header.bg-white,
+html.dark header[class*="bg-white/"],
+html.dark nav.bg-white {
+  background-color: rgba(28, 25, 23, 0.95) !important;
+  border-color: #292524 !important;
+}
+
+html.dark footer {
+  background-color: #12100e !important;
+  border-color: #292524 !important;
+}
+
+html.dark .shadow-sm,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Table rows in dark mode */
+html.dark tr.hover\:bg-gray-50:hover,
+html.dark tr.hover\:bg-gray-50\/60:hover {
+  background-color: #292524 !important; /* stone-800 */
+}
+
+/* Dropdown menus & modals in dark mode */
+html.dark .bg-white.rounded-2xl,
+html.dark .bg-white.rounded-xl,
+html.dark .bg-white.rounded-3xl {
+  background-color: #1c1917 !important;
+  border-color: #292524 !important;
+}
+
+/* Safeguard: Ensure dark purple/indigo buttons are never illegible with dark text in light mode */
+html:not(.dark) [class*="bg-purple-900"],
+html:not(.dark) [class*="bg-purple-950"] {
+  background-color: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border-color: #d8b4fe !important;
+}
+
+html:not(.dark) [class*="bg-blue-900"],
+html:not(.dark) [class*="bg-blue-950"] {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-color: #93c5fd !important;
+}
+
+
+/* ============================================================ */
+/* ☀️ LIGHT MODE FOR ADMIN PORTAL (Active when NOT .dark)      */
+/* ============================================================ */
+html:not(.dark) .min-h-screen.bg-stone-950 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .admin-left-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 2px 0 12px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) .admin-left-sidebar a {
+  color: #475569 !important;
+}
+
+html:not(.dark) .admin-left-sidebar a:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .admin-left-sidebar a[class*="from-saffron-500"] {
+  color: #ffffff !important;
+}
+
+html:not(.dark) .admin-left-sidebar .border-stone-800,
+html:not(.dark) .admin-left-sidebar .border-stone-800\/80 {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .admin-left-sidebar .bg-stone-950\/40,
+html:not(.dark) .admin-left-sidebar .bg-stone-950\/60 {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .admin-left-sidebar .text-white {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .admin-left-sidebar .text-stone-300,
+html:not(.dark) .admin-left-sidebar .text-stone-400 {
+  color: #64748b !important;
+}
+
+html:not(.dark) .admin-left-sidebar .bg-stone-800\/80,
+html:not(.dark) .admin-left-sidebar .bg-stone-800 {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) header.bg-stone-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) header.bg-stone-900 .text-white {
+  color: #0f172a !important;
+}
+
+html:not(.dark) header.bg-stone-900 .text-stone-300,
+html:not(.dark) header.bg-stone-900 .text-stone-400 {
+  color: #64748b !important;
+}
+
+html:not(.dark) header.bg-stone-900 .bg-stone-800 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+html:not(.dark) main .bg-stone-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) main .bg-stone-950,
+html:not(.dark) main .bg-stone-950\/70,
+html:not(.dark) main .bg-stone-950\/80 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) main .border-stone-800,
+html:not(.dark) main .border-stone-800\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) main .text-white {
+  color: #0f172a !important;
+}
+
+html:not(.dark) main .text-stone-200,
+html:not(.dark) main .text-stone-300 {
+  color: #334155 !important;
+}
+
+html:not(.dark) main .text-stone-400,
+html:not(.dark) main .text-stone-500 {
+  color: #64748b !important;
+}
+
+html:not(.dark) main .bg-stone-800 {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+html:not(.dark) main input,
+html:not(.dark) main select,
+html:not(.dark) main textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) main thead.bg-stone-950\/80,
+html:not(.dark) main thead.bg-stone-950\/70 {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+html:not(.dark) main tr.hover\:bg-stone-800\/40:hover {
+  background-color: #f8fafc !important;
+}
+
+/* ============================================================ */
+/* ☀️ LIGHT MODE HERO BANNER FIX & GLOBAL CONTRAST             */
+/* ============================================================ */
+.admin-hero-banner {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+html:not(.dark) .admin-hero-banner {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+}
+html:not(.dark) .admin-hero-banner h1,
+html:not(.dark) .admin-hero-banner h2,
+html:not(.dark) .admin-hero-banner h3 {
+  color: #0f172a !important;
+}
+html:not(.dark) .admin-hero-banner p {
+  color: #475569 !important;
+}
+html:not(.dark) .admin-hero-banner strong {
+  color: #0f172a !important;
+}
+html:not(.dark) .admin-hero-banner [class*="bg-stone-50"],
+html:not(.dark) .admin-hero-banner [class*="bg-stone-100"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.dark .admin-hero-banner {
+  background-color: #1c1917 !important;
+  background-image: none !important;
+  border-color: #292524 !important;
+  color: #f8fafc !important;
+}
+html.dark .admin-hero-banner h1,
+html.dark .admin-hero-banner h2,
+html.dark .admin-hero-banner h3 {
+  color: #ffffff !important;
+}
+html.dark .admin-hero-banner p {
+  color: #cbd5e1 !important;
+}
+html.dark .admin-hero-banner [class*="bg-stone-50"] {
+  background-color: rgba(12, 10, 9, 0.7) !important;
+  border-color: #292524 !important;
+  color: #e7e5e4 !important;
+}
+html.dark .admin-hero-banner [class*="bg-stone-100"] {
+  background-color: rgba(41, 37, 36, 0.8) !important;
+  border-color: #44403c !important;
+  color: #e7e5e4 !important;
+}
+
+/* ============================================================ */
+/* Admin Sidebar Layout: Desktop content offset                 */
+/* ============================================================ */
+@media (min-width: 1024px) {
+  body:has(.admin-left-sidebar) main:not(.admin-layout-main) {
+    transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1), max-width 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  body:has(.admin-left-sidebar):not(.admin-sidebar-collapsed) main:not(.admin-layout-main) {
+    margin-left: 16rem !important;
+    max-width: calc(100vw - 18rem) !important;
+  }
+  body.admin-sidebar-collapsed:has(.admin-left-sidebar) main:not(.admin-layout-main) {
+    margin-left: 5rem !important;
+    max-width: calc(100vw - 7rem) !important;
+  }
+  .admin-layout-main {
+    margin-left: 0 !important;
+    max-width: 80rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Admin Footer Sidebar Offset (when standalone sibling to AdminNavbar) */
+  body:has(.admin-left-sidebar):not(.admin-sidebar-collapsed) footer.admin-footer:not(.admin-layout-main footer) {
+    margin-left: 16rem !important;
+    max-width: calc(100vw - 16rem) !important;
+    transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1), max-width 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  body.admin-sidebar-collapsed:has(.admin-left-sidebar) footer.admin-footer:not(.admin-layout-main footer) {
+    margin-left: 5rem !important;
+    max-width: calc(100vw - 5rem) !important;
+    transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1), max-width 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
 }

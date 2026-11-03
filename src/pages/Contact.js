@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How can I become an instructor on YogaZen?',
-    a: 'Certified yoga and meditation teachers can apply directly by clicking "Teach on YogaZen" or visiting the Trainer Registration portal.'
+    a: 'Certified yoga and meditation trainers can apply directly by visiting the Trainer Registration portal.'
   }
 ];
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -10,7 +10,7 @@ import tracker from '../services/analyticsTracker';
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart, toggleWishlist, wishlist } = useCartWishlist();
-  const { isLoggedIn, currentUser, openAuthModal } = useAuth();
+  const { currentUser } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -68,6 +68,17 @@ const ProductDetail = () => {
     }
   }, [id]);
 
+  const productRef = useRef(product);
+  const selectedVarietyRef = useRef(selectedVariety);
+
+  useEffect(() => {
+    productRef.current = product;
+  }, [product]);
+
+  useEffect(() => {
+    selectedVarietyRef.current = selectedVariety;
+  }, [selectedVariety]);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     loadProductData();
@@ -75,12 +86,12 @@ const ProductDetail = () => {
 
     const enterTime = Date.now();
     return () => {
-      if (product) {
+      if (productRef.current) {
         const dwellSeconds = (Date.now() - enterTime) / 1000;
-        tracker.trackProductView(product, dwellSeconds, selectedVariety?.sku);
+        tracker.trackProductView(productRef.current, dwellSeconds, selectedVarietyRef.current?.sku);
       }
     };
-  }, [loadProductData, loadSimilarProducts, product, selectedVariety]);
+  }, [loadProductData, loadSimilarProducts]);
 
   // Handle switching variety swatch
   const handleSelectVariety = (variety) => {
@@ -118,26 +129,25 @@ const ProductDetail = () => {
 
   // Add to cart with variety details
   const handleAddToCart = async () => {
-    if (!isLoggedIn) {
-      openAuthModal('Please sign in to add mindful items to your cart.');
-      return;
-    }
-    await addToCart(product._id, quantity, {
-      varietySku: selectedVariety?.sku || '',
-      varietyName: selectedVariety?.name || '',
-      image: activeImage,
-      price: effectivePrice
-    });
+    await addToCart(
+      product._id,
+      quantity,
+      {
+        varietySku: selectedVariety?.sku || '',
+        varietyName: selectedVariety?.name || '',
+        image: activeImage,
+        price: effectivePrice,
+        productTitle: product.title,
+        category: product.category
+      },
+      product
+    );
     tracker.trackCartAction(product, selectedVariety?.sku, 'add_to_cart');
   };
 
   // Add to wishlist
   const handleWishlistClick = async () => {
-    if (!isLoggedIn) {
-      openAuthModal('Please sign in to save items to your wishlist.');
-      return;
-    }
-    await toggleWishlist(product._id);
+    await toggleWishlist(product._id, product);
     tracker.trackWishlistAction(product, 'add_to_wishlist');
   };
 

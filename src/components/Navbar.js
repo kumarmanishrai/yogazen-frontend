@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCartWishlist } from '../context/CartWishlistContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { currentUser, role, isLoggedIn, logout, openAuthModal } = useAuth();
+  const { currentUser, role, isLoggedIn, logout } = useAuth();
   const { cartCount, wishlistCount } = useCartWishlist();
+  const { toggleTheme, isDark } = useTheme();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -20,20 +22,12 @@ const Navbar = () => {
 
   const handleCartClick = (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      openAuthModal('Please sign in to access your shopping cart.');
-    } else {
-      navigate('/cart');
-    }
+    navigate('/cart');
   };
 
   const handleWishlistClick = (e) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      openAuthModal('Please sign in to view your saved wishlist.');
-    } else {
-      navigate('/wishlist');
-    }
+    navigate('/wishlist');
   };
 
   const handleLogout = async () => {
@@ -101,13 +95,32 @@ const Navbar = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Courses Link */}
+            <Link
+              to="/courses"
+              className="hidden lg:flex items-center text-sm font-semibold text-gray-700 hover:text-saffron-600 px-3 py-2 rounded-lg transition"
+            >
+              🧘 Yoga Courses
+            </Link>
+
             {/* Catalog/Store Link */}
             <Link
               to="/products"
               className="hidden lg:flex items-center text-sm font-semibold text-gray-700 hover:text-saffron-600 px-3 py-2 rounded-lg transition"
             >
-              Shop All
+              🛍️ Shop Products
             </Link>
+
+            {/* Light / Dark Mode Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border border-gray-200 dark:border-stone-700 bg-gray-50 dark:bg-stone-800 text-gray-700 dark:text-stone-200 hover:text-saffron-600 hover:border-saffron-300 transition shadow-xs"
+              title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+            >
+              <span className="text-sm">{isDark ? '🌙' : '☀️'}</span>
+              <span className="hidden md:inline font-mono text-[11px]">{isDark ? 'Dark' : 'Light'}</span>
+            </button>
 
             {/* Wishlist Button (Protected: prompts login popup if not signed in) */}
             <button
@@ -225,7 +238,7 @@ const Navbar = () => {
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-2 px-4 py-2 text-xs text-saffron-700 hover:bg-saffron-50 font-semibold transition"
                         >
-                          <span>🌿</span> Teach on YogaZen
+                          <span>🌿</span> Join as Trainer
                         </Link>
                       </div>
                     ) : (
@@ -258,6 +271,13 @@ const Navbar = () => {
                         ) : (
                           <>
                             <Link
+                              to="/my-learning"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-saffron-700 bg-saffron-50/70 hover:bg-saffron-100 font-extrabold transition"
+                            >
+                              🧘 My Learning & Live Classes
+                            </Link>
+                            <Link
                               to="/profile"
                               onClick={() => setIsProfileOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
@@ -284,6 +304,51 @@ const Navbar = () => {
                               className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
                             >
                               📦 My Orders & Invoices
+                            </Link>
+                          </>
+                        )}
+
+                        {/* Admin Portal Links */}
+                        {(role === 'admin' || role === 'superadmin') && (
+                          <>
+                            <div className="border-t border-gray-100 my-1"></div>
+                            <span className="px-4 py-1 text-[10px] uppercase font-bold text-saffron-600 tracking-wider block">
+                              Admin Command Hub
+                            </span>
+                            <Link
+                              to="/admin"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-bold transition"
+                            >
+                              👑 Admin Dashboard
+                            </Link>
+                            <Link
+                              to="/admin/inventory"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
+                            >
+                              📦 Inventory Management
+                            </Link>
+                            <Link
+                              to="/admin/inventory?view=coupons"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
+                            >
+                              🎟️ Manage Promo Codes
+                            </Link>
+                            <Link
+                              to="/admin/inventory?view=orders"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
+                            >
+                              🚚 Orders & Fulfillment
+                            </Link>
+                            <Link
+                              to="/admin/complaints"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-saffron-50 hover:text-saffron-700 font-medium transition"
+                            >
+                              🎫 Order Complaints
                             </Link>
                           </>
                         )}
@@ -350,12 +415,45 @@ const Navbar = () => {
         {/* Mobile Menu Drawer */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-100 py-3 space-y-2">
+            {/* Mobile Theme Switcher */}
+            <button
+              type="button"
+              onClick={() => {
+                toggleTheme();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-stone-800 text-gray-700 dark:text-stone-200 border border-gray-200 dark:border-stone-700 hover:text-saffron-600 transition"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-base">{isDark ? '🌙' : '☀️'}</span>
+                <span>{isDark ? 'Theme: Dark Mode' : 'Theme: Light Mode'}</span>
+              </span>
+              <span className="text-[10px] bg-saffron-500 text-white font-bold px-2.5 py-0.5 rounded-full">
+                Switch
+              </span>
+            </button>
+
+            <Link
+              to="/courses"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-saffron-50 hover:text-saffron-600"
+            >
+              🧘 Yoga Courses
+            </Link>
+            {isLoggedIn && role === 'user' && (
+              <Link
+                to="/my-learning"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-bold text-saffron-700 bg-saffron-50 hover:bg-saffron-100"
+              >
+                🧘 My Learning & Live Studio
+              </Link>
+            )}
             <Link
               to="/products"
               onClick={() => setIsMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-saffron-50 hover:text-saffron-600"
             >
-              🛍️ All Products
+              🛍️ Shop Products
             </Link>
             <button
               onClick={(e) => {
@@ -409,7 +507,7 @@ const Navbar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block text-center py-2 text-xs font-semibold text-saffron-700 bg-saffron-50 rounded-xl"
                 >
-                  🌿 Teach on YogaZen (Join as Trainer)
+                  🌿 Join as Trainer on YogaZen
                 </Link>
               </div>
             ) : (

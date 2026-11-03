@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { Link, useNavigate } from 'react-router-dom';
+import AdminNavbar from '../components/AdminNavbar';
+import AdminFooter from '../components/AdminFooter';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import {
   apiAdminGetComplaints,
   apiAdminGetComplaintStats,
@@ -29,7 +30,21 @@ const QUICK_RESOLUTIONS = [
 ];
 
 const AdminComplaints = () => {
-  const { role, isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const navigate = useNavigate();
+  const { role, isLoggedIn, isAdmin, hasPermission, isLoading: isAuthLoading } = useAuth();
+  const { showNotification } = useNotification();
+
+  // Guard: Permission check
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!isLoggedIn || !isAdmin) {
+        navigate('/admin/login', { replace: true });
+      } else if (!hasPermission('complaints')) {
+        showNotification('Access denied. Complaints management permission required.', 'error');
+        navigate('/admin', { replace: true });
+      }
+    }
+  }, [isLoggedIn, isAdmin, hasPermission, isAuthLoading, navigate, showNotification]);
 
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState({
@@ -137,55 +152,54 @@ const AdminComplaints = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-between font-nunito">
-        <Navbar />
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
+        <AdminNavbar activePage="complaints" />
         <div className="py-32 text-center">
           <div className="w-12 h-12 border-4 border-saffron-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-xs font-semibold text-gray-500">Authenticating administrator access...</p>
+          <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Authenticating administrator access...</p>
         </div>
-        <Footer />
+        <AdminFooter />
       </div>
     );
   }
 
   // Admin Barrier: neither regular users nor trainers can access admin portal
-  if (!isLoggedIn || (role !== 'admin' && role !== 'superadmin')) {
+  if (!isLoggedIn || !isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex flex-col justify-between font-nunito">
-        <Navbar />
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
+        <AdminNavbar activePage="complaints" />
         <main className="max-w-xl mx-auto px-4 py-24 text-center">
-          <div className="p-8 sm:p-12 bg-white rounded-3xl border border-red-200 shadow-sm">
+          <div className="p-8 sm:p-12 bg-white dark:bg-stone-900 rounded-3xl border border-red-200 dark:border-red-900/40 shadow-sm">
             <span className="text-5xl">🛑</span>
-            <h1 className="text-2xl font-black text-gray-900 mt-4">Access Denied: Admin Portal Only</h1>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-              This grievance and dispute resolution portal is restricted exclusively to <span className="font-bold text-red-600">YogaZen Administrators</span>.
-              Practitioners and yoga instructors are forbidden from accessing admin complaint management.
+            <h1 className="text-2xl font-black text-stone-900 dark:text-white mt-4">Access Denied: Admin Portal Only</h1>
+            <p className="text-sm text-stone-600 dark:text-stone-400 mt-2 leading-relaxed">
+              This grievance and dispute resolution portal is restricted exclusively to authorized <span className="font-bold text-red-600">YogaZen Administrators</span>.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                to="/login"
+                to="/admin/login"
                 className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm"
               >
-                Sign In as Administrator
+                🔐 Admin Sign In
               </Link>
               <Link
                 to="/"
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition"
+                className="px-6 py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition"
               >
                 Return to Store Home
               </Link>
             </div>
           </div>
         </main>
-        <Footer />
+        <AdminFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-between font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
       <div>
-        <Navbar />
+        <AdminNavbar activePage="complaints" />
 
         <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
           
@@ -617,7 +631,7 @@ const AdminComplaints = () => {
         </div>
       )}
 
-      <Footer />
+      <AdminFooter />
     </div>
   );
 };

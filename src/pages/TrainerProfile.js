@@ -200,7 +200,7 @@ const TrainerProfile = () => {
                 to="/trainer/register"
                 className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
               >
-                Apply to Teach on YogaZen 🌿
+                Apply to Train on YogaZen 🌿
               </Link>
             </div>
           </div>
@@ -370,7 +370,7 @@ const TrainerProfile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Years of Teaching Experience</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Years of Training Experience</label>
                     <input
                       type="number"
                       min="0"
@@ -460,13 +460,13 @@ const TrainerProfile = () => {
                       <p className="text-gray-700 leading-relaxed">{trainerData.bio}</p>
                     ) : (
                       <p className="text-gray-400 italic">
-                        No instructor biography provided yet. Click "Edit Profile" to share your journey, lineage, and teaching philosophy with your students.
+                        No instructor biography provided yet. Click "Edit Profile" to share your journey, lineage, and training philosophy with your students.
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <span className="text-xs text-gray-400 uppercase font-bold block mb-2">Teaching Specializations</span>
+                    <span className="text-xs text-gray-400 uppercase font-bold block mb-2">Training Specializations</span>
                     {trainerData.categories.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {trainerData.categories.map((cat) => (

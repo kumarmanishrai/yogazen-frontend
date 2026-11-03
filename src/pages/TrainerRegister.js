@@ -73,10 +73,10 @@ const TrainerRegister = () => {
           <div className="text-center mb-8">
             <span className="text-2xl mb-1 inline-block">🧘‍♂️</span>
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Teach on <span className="text-saffron-600">YogaZen</span>
+              Train on <span className="text-saffron-600">YogaZen</span>
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Create courses, teach mindful students, and receive earnings directly
+              Create courses, train mindful students, and receive earnings directly
             </p>
           </div>
 

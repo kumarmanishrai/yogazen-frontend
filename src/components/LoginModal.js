@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const LoginModal = () => {
@@ -10,8 +10,13 @@ const LoginModal = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!isAuthModalOpen) return null;
+
+  const isCartPage = location.pathname === '/cart';
+  const loginUrl = isCartPage ? '/login?redirect=/cart&checkout=true' : '/login';
+  const registerUrl = isCartPage ? '/register?redirect=/cart&checkout=true' : '/register';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,7 +112,7 @@ const LoginModal = () => {
               <span className="text-xs font-semibold text-gray-700">Login as Trainer</span>
             </label>
             <Link
-              to="/login"
+              to={loginUrl}
               onClick={closeAuthModal}
               className="text-xs text-saffron-600 hover:underline font-medium"
             >
@@ -128,7 +133,7 @@ const LoginModal = () => {
         <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-600">
           <span>New to YogaZen? </span>
           <Link
-            to="/register"
+            to={registerUrl}
             onClick={closeAuthModal}
             className="font-bold text-saffron-600 hover:underline"
           >

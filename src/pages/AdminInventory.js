@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { Link, useNavigate } from 'react-router-dom';
+import AdminNavbar from '../components/AdminNavbar';
+import AdminFooter from '../components/AdminFooter';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import {
   apiAdminGetProducts,
   apiAdminAddProduct,
   apiAdminUpdateProduct,
-  apiAdminUpdateStock,
-  apiAdminDeleteProduct
+  apiAdminDeleteProduct,
+  apiAdminGetOrders,
+  apiAdminUpdateOrderStatus,
+  apiAdminGetCoupons,
+  apiAdminCreateCoupon,
+  apiAdminToggleCoupon,
+  apiAdminDeleteCoupon
 } from '../services/api';
 
 const CATEGORIES = [
@@ -22,7 +28,29 @@ const CATEGORIES = [
 ];
 
 const AdminInventory = () => {
-  const { role, isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const navigate = useNavigate();
+  const { isLoggedIn, isAdmin, hasPermission, isLoading: isAuthLoading } = useAuth();
+  const { showNotification } = useNotification();
+
+  // Guard: Permission check
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!isLoggedIn || !isAdmin) {
+        navigate('/admin/login', { replace: true });
+      } else if (!hasPermission('inventory')) {
+        showNotification('Access denied. Inventory permission required.', 'error');
+        navigate('/admin', { replace: true });
+      }
+    }
+  }, [isLoggedIn, isAdmin, hasPermission, isAuthLoading, navigate, showNotification]);
+
+  // Top-level View Switcher: 'inventory' | 'orders' | 'coupons'
+  const queryView = new URLSearchParams(window.location.search).get('view');
+  const [activeAdminView, setActiveAdminView] = useState(
+    ['inventory', 'orders', 'coupons'].includes(queryView) ? queryView : 'inventory'
+  );
+
+  // Inventory State
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -34,10 +62,47 @@ const AdminInventory = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  // Filters
+  // Inventory Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [stockFilter, setStockFilter] = useState('all');
+
+  // Orders & Fulfillment State
+  const [orders, setOrders] = useState([]);
+  const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    pendingFulfillment: 0,
+    shippedCount: 0,
+    deliveredCount: 0,
+    cancelledCount: 0
+  });
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('All');
+  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] = useState(null);
+  const [dispatchForm, setDispatchForm] = useState({
+    status: 'Shipped',
+    courierName: 'BlueDart Express',
+    trackingNumber: ''
+  });
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+
+  // Promo Codes & Coupons State
+  const [coupons, setCoupons] = useState([]);
+  const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [isSubmittingCoupon, setIsSubmittingCoupon] = useState(false);
+  const initialCouponForm = {
+    code: '',
+    discountType: 'percent',
+    discountValue: 15,
+    minOrderValue: 999,
+    maxDiscount: '',
+    description: '',
+    expiresAt: ''
+  };
+  const [couponFormData, setCouponFormData] = useState(initialCouponForm);
 
   // Modals & Form State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -98,6 +163,124 @@ const AdminInventory = () => {
     fetchInventory();
   }, [fetchInventory]);
 
+  // Fetch Platform Orders for Fulfillment
+  const fetchOrders = useCallback(async () => {
+    setIsLoadingOrders(true);
+    try {
+      const params = {};
+      if (orderStatusFilter !== 'All') params.status = orderStatusFilter;
+      if (orderSearch.trim()) params.search = orderSearch.trim();
+
+      const res = await apiAdminGetOrders(params);
+      if (res?.success) {
+        setOrders(res.orders || []);
+        if (res.stats) setOrderStats(res.stats);
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to load platform orders', 'error');
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  }, [orderStatusFilter, orderSearch]);
+
+  // Fetch Promo Codes
+  const fetchCoupons = useCallback(async () => {
+    setIsLoadingCoupons(true);
+    try {
+      const res = await apiAdminGetCoupons();
+      if (res?.success) {
+        setCoupons(res.coupons || []);
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to load promo codes', 'error');
+    } finally {
+      setIsLoadingCoupons(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeAdminView === 'orders') {
+      fetchOrders();
+    } else if (activeAdminView === 'coupons') {
+      fetchCoupons();
+    }
+  }, [activeAdminView, fetchOrders, fetchCoupons]);
+
+  // Open Fulfillment / Dispatch Modal
+  const openDispatchModal = (order) => {
+    setSelectedFulfillmentOrder(order);
+    setDispatchForm({
+      status: order.status === 'Processing' ? 'Shipped' : order.status,
+      courierName: order.courierName || 'BlueDart Express',
+      trackingNumber: order.trackingNumber || `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`
+    });
+  };
+
+  const handleUpdateOrderStatus = async (e) => {
+    e.preventDefault();
+    if (!selectedFulfillmentOrder) return;
+    try {
+      setIsUpdatingOrder(true);
+      const res = await apiAdminUpdateOrderStatus(selectedFulfillmentOrder._id, dispatchForm);
+      if (res?.success) {
+        showToast(res.message);
+        setSelectedFulfillmentOrder(null);
+        fetchOrders();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update order status', 'error');
+    } finally {
+      setIsUpdatingOrder(false);
+    }
+  };
+
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponFormData.code.trim()) {
+      showToast('Coupon code is required', 'error');
+      return;
+    }
+    try {
+      setIsSubmittingCoupon(true);
+      const res = await apiAdminCreateCoupon(couponFormData);
+      if (res?.success) {
+        showToast(res.message);
+        setIsCouponModalOpen(false);
+        setCouponFormData(initialCouponForm);
+        fetchCoupons();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to create promo code', 'error');
+    } finally {
+      setIsSubmittingCoupon(false);
+    }
+  };
+
+  const handleToggleCoupon = async (coupon) => {
+    try {
+      const res = await apiAdminToggleCoupon(coupon._id);
+      if (res?.success) {
+        showToast(res.message);
+        fetchCoupons();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to toggle coupon status', 'error');
+    }
+  };
+
+  const handleDeleteCoupon = async (coupon) => {
+    if (!window.confirm(`Delete promo code "${coupon.code}"?`)) return;
+    try {
+      const res = await apiAdminDeleteCoupon(coupon._id);
+      if (res?.success) {
+        showToast(res.message);
+        fetchCoupons();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to delete coupon', 'error');
+    }
+  };
+
   // Handle Form Submit (Push to Database)
   const handleSubmitProduct = async (e) => {
     e.preventDefault();
@@ -132,22 +315,6 @@ const AdminInventory = () => {
       showToast(err.message || 'Operation failed', 'error');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Quick Stock Adjust (+1, -1, or custom)
-  const handleQuickStock = async (product, delta) => {
-    const newStock = Math.max(0, (product.stock || 0) + delta);
-    try {
-      const res = await apiAdminUpdateStock(product._id, { stock: newStock });
-      if (res?.success) {
-        setProducts((prev) =>
-          prev.map((p) => (p._id === product._id ? { ...p, stock: newStock } : p))
-        );
-        fetchInventory();
-      }
-    } catch (err) {
-      showToast(err.message || 'Failed to adjust stock', 'error');
     }
   };
 
@@ -277,68 +444,77 @@ const AdminInventory = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-between font-nunito">
-        <Navbar />
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
+        <AdminNavbar activePage="inventory" />
         <div className="py-32 text-center">
           <div className="w-12 h-12 border-4 border-saffron-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-xs font-semibold text-gray-500">Authenticating administrator access...</p>
+          <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">Authenticating administrator access...</p>
         </div>
-        <Footer />
+        <AdminFooter />
       </div>
     );
   }
 
   // Admin Barrier: neither users nor trainers can access admin portal
-  if (!isLoggedIn || (role !== 'admin' && role !== 'superadmin')) {
+  if (!isLoggedIn || (!isAdmin)) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex flex-col justify-between font-nunito">
-        <Navbar />
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
+        <AdminNavbar activePage="inventory" />
         <main className="max-w-xl mx-auto px-4 py-24 text-center">
-          <div className="p-8 sm:p-12 bg-white rounded-3xl border border-red-200 shadow-sm">
+          <div className="p-8 sm:p-12 bg-white dark:bg-stone-900 rounded-3xl border border-red-200 dark:border-red-900/40 shadow-sm">
             <span className="text-5xl">🛑</span>
-            <h1 className="text-2xl font-black text-gray-900 mt-4">Access Denied: Admin Portal Only</h1>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-              This inventory control dashboard is strictly restricted to <span className="font-bold text-red-600">YogaZen Administrators</span>.
-              Regular user accounts and instructor accounts do not have permission to view or modify store warehouse records.
+            <h1 className="text-2xl font-black text-stone-900 dark:text-white mt-4">Access Denied: Admin Portal Only</h1>
+            <p className="text-sm text-stone-600 dark:text-stone-400 mt-2 leading-relaxed">
+              This inventory control dashboard is strictly restricted to authorized <span className="font-bold text-red-600">YogaZen Administrators</span>.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                to="/"
+                to="/admin/login"
                 className="w-full sm:w-auto px-6 py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-xs transition"
               >
-                Return to Home
+                🔐 Admin Sign In
               </Link>
               <Link
-                to="/products"
-                className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+                to="/"
+                className="w-full sm:w-auto px-6 py-3 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold text-xs rounded-xl transition"
               >
-                Go to Mindful Store
+                Return to Home
               </Link>
             </div>
           </div>
         </main>
-        <Footer />
+        <AdminFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-between font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
       <div>
-        <Navbar />
+        <AdminNavbar activePage="inventory" />
 
         <main className="max-w-7xl mx-auto px-4 py-8">
           {/* Header & Stats Banner */}
           <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-200 gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <span className="text-3xl">📦</span>
+                <span className="text-3xl">
+                  {activeAdminView === 'orders' ? '🚚' : activeAdminView === 'coupons' ? '🎟️' : '📦'}
+                </span>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                    Inventory & Store Management
+                    {activeAdminView === 'orders'
+                      ? 'Store Orders & Fulfillment'
+                      : activeAdminView === 'coupons'
+                      ? 'Promotional Codes & Coupons'
+                      : 'Inventory & Store Management'}
                   </h1>
                   <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                    Push new wellness products to MongoDB, monitor real-time stock levels, and restock
+                    {activeAdminView === 'orders'
+                      ? 'Process customer orders, assign courier partners, update tracking numbers, and fulfill shipments'
+                      : activeAdminView === 'coupons'
+                      ? 'Configure store discount codes, set percentage/flat amounts, minimum spends, and monitor redemption stats'
+                      : 'Push new wellness products to MongoDB, monitor real-time stock levels, and restock'}
                   </p>
                 </div>
               </div>
@@ -346,12 +522,44 @@ const AdminInventory = () => {
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-gray-200 shadow-xs">
-                <Link
-                  to="/admin/inventory"
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-saffron-500 text-white shadow-sm transition"
+                <button
+                  type="button"
+                  onClick={() => setActiveAdminView('inventory')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    activeAdminView === 'inventory'
+                      ? 'bg-saffron-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
                   📦 Store Inventory
-                </Link>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveAdminView('orders')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    activeAdminView === 'orders'
+                      ? 'bg-saffron-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>🚚 Orders & Fulfillment</span>
+                  {orderStats.pendingFulfillment > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-extrabold animate-pulse">
+                      {orderStats.pendingFulfillment}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveAdminView('coupons')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    activeAdminView === 'coupons'
+                      ? 'bg-saffron-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>🎟️ Promo Codes</span>
+                </button>
                 <Link
                   to="/admin/complaints"
                   className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition"
@@ -360,22 +568,42 @@ const AdminInventory = () => {
                 </Link>
               </div>
 
-              <button
-                onClick={() => {
-                  setEditingProduct(null);
-                  setModalTab('basic');
-                  setFormData(initialFormState);
-                  setIsAddModalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer self-start md:self-auto"
-              >
-                <span>✨</span>
-                <span>+ Push New Product</span>
-              </button>
+              {activeAdminView === 'inventory' ? (
+                <button
+                  onClick={() => {
+                    setEditingProduct(null);
+                    setModalTab('basic');
+                    setFormData(initialFormState);
+                    setIsAddModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer self-start md:self-auto"
+                >
+                  <span>+ Push New Product</span>
+                </button>
+              ) : activeAdminView === 'orders' ? (
+                <button
+                  onClick={fetchOrders}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition cursor-pointer self-start md:self-auto"
+                  title="Refresh orders list"
+                >
+                  <span>🔄</span>
+                  <span>Refresh Orders</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsCouponModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer self-start md:self-auto"
+                >
+                  <span>🎟️</span>
+                  <span>+ Create Promo Code</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Quick Metrics Bar */}
+          {activeAdminView === 'inventory' ? (
+            <>
+              {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
             <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
               <span className="text-[10px] uppercase font-bold text-gray-400">Total Catalog Items</span>
@@ -469,7 +697,6 @@ const AdminInventory = () => {
                       <th className="py-3.5 px-4">Category</th>
                       <th className="py-3.5 px-4">Price / Discount</th>
                       <th className="py-3.5 px-4">Live Stock</th>
-                      <th className="py-3.5 px-4">Quick Restock</th>
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -548,27 +775,6 @@ const AdminInventory = () => {
                             )}
                           </td>
 
-                          {/* Quick Restock Stepper */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 overflow-hidden w-28">
-                              <button
-                                onClick={() => handleQuickStock(product, -1)}
-                                className="w-8 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 font-bold transition"
-                                title="Decrease stock by 1"
-                              >
-                                -
-                              </button>
-                              <span className="flex-1 text-center font-bold text-gray-800">{stock}</span>
-                              <button
-                                onClick={() => handleQuickStock(product, 5)}
-                                className="w-8 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-200 font-bold transition text-xs"
-                                title="Add 5 units"
-                              >
-                                +5
-                              </button>
-                            </div>
-                          </td>
-
                           {/* Actions */}
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -594,6 +800,358 @@ const AdminInventory = () => {
               </div>
             )}
           </div>
+        </>
+      ) : activeAdminView === 'orders' ? (
+        <div className="space-y-6 mt-6">
+          {/* Orders Metrics Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-gray-400">Total Orders</span>
+              <p className="text-2xl font-black text-gray-900 mt-1">{orderStats.totalOrders}</p>
+              <span className="text-[11px] text-gray-500">All-time transactions</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-emerald-600">Total Gross</span>
+              <p className="text-2xl font-black text-emerald-700 mt-1">₹{orderStats.totalRevenue?.toLocaleString() || 0}</p>
+              <span className="text-[11px] text-gray-500">Platform revenue</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-amber-600">Pending Fulfillment</span>
+              <p className="text-2xl font-black text-amber-600 mt-1">{orderStats.pendingFulfillment}</p>
+              <span className="text-[11px] text-amber-600 font-semibold">Needs packing</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-blue-600">In Transit</span>
+              <p className="text-2xl font-black text-blue-600 mt-1">{orderStats.shippedCount}</p>
+              <span className="text-[11px] text-gray-500">With couriers</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-emerald-600">Delivered</span>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{orderStats.deliveredCount}</p>
+              <span className="text-[11px] text-gray-500">Completed shipments</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-rose-600">Cancelled / Returned</span>
+              <p className="text-2xl font-black text-rose-600 mt-1">{orderStats.cancelledCount}</p>
+              <span className="text-[11px] text-gray-500">Restocked items</span>
+            </div>
+          </div>
+
+          {/* Orders Filter & Search Bar */}
+          <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:w-96">
+              <input
+                type="text"
+                placeholder="Search by Order ID, courier tracking, customer or city..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500"
+              />
+              <span className="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+            </div>
+
+            {/* Status Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+              {['All', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOrderStatusFilter(status)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    orderStatusFilter === status
+                      ? 'bg-saffron-500 text-white shadow-xs'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Orders Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            {isLoadingOrders ? (
+              <div className="p-12 text-center">
+                <div className="inline-block animate-spin text-2xl text-saffron-500">🌀</div>
+                <p className="text-xs text-gray-500 font-semibold mt-2">Loading platform fulfillment orders...</p>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="p-12 text-center">
+                <span className="text-4xl">📦</span>
+                <h3 className="text-base font-bold text-gray-800 mt-2">No orders found</h3>
+                <p className="text-xs text-gray-500 mt-1">There are no customer orders matching the current filter criteria.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                      <th className="py-3 px-4">Order Ref & Date</th>
+                      <th className="py-3 px-4">Customer & Address</th>
+                      <th className="py-3 px-4">Items / SKUs</th>
+                      <th className="py-3 px-4">Amount & Payment</th>
+                      <th className="py-3 px-4">Fulfillment Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {orders.map((order) => {
+                      const isProcessing = order.status === 'Processing';
+                      const isShipped = order.status === 'Shipped';
+                      const isDelivered = order.status === 'Delivered';
+                      const isCancelled = order.status === 'Cancelled';
+                      const displayId = order.orderId || (order._id ? `#${order._id.slice(-8).toUpperCase()}` : '#ORDER');
+
+                      return (
+                        <tr key={order._id} className="hover:bg-gray-50/70 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-gray-900 whitespace-nowrap">
+                            <div>{displayId}</div>
+                            <div className="text-[10px] text-gray-400 font-normal mt-0.5">
+                              {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-600 uppercase">
+                              {order.orderType || 'product'}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 max-w-xs">
+                            <div className="font-bold text-gray-900">
+                              {order.shippingAddress?.fullName || order.user?.name || 'Mindful Customer'}
+                            </div>
+                            <div className="text-[11px] text-gray-500">
+                              {order.shippingAddress?.phone || order.user?.email || 'N/A'}
+                            </div>
+                            <div className="text-[10px] text-gray-400 truncate mt-0.5">
+                              {order.shippingAddress?.street ? `${order.shippingAddress.street}, ` : ''}
+                              {order.shippingAddress?.city || ''} {order.shippingAddress?.pincode ? `- ${order.shippingAddress.pincode}` : ''}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-1 max-w-xs">
+                              {order.items?.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-[11px]">
+                                  <span className="font-bold text-saffron-600">{item.quantity}x</span>
+                                  <span className="text-gray-800 truncate font-medium">{item.title}</span>
+                                  {item.varietySku && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-neutral-100 text-neutral-600">
+                                      {item.varietySku}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <div className="font-bold text-gray-900">₹{order.totalAmount?.toLocaleString()}</div>
+                            {order.discountAmount > 0 && (
+                              <div className="text-[10px] text-emerald-600 font-semibold">
+                                Saved ₹{order.discountAmount} ({order.couponCode})
+                              </div>
+                            )}
+                            <div className="mt-1 flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                {order.paymentMethod || 'COD'}
+                              </span>
+                              <span className={`text-[10px] font-bold ${order.paymentStatus === 'Completed' ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                • {order.paymentStatus}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {isProcessing && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                <span className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-pulse"></span>
+                                Pending Dispatch
+                              </span>
+                            )}
+                            {isShipped && (
+                              <div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                  <span>🚚</span> In Transit ({order.courierName || 'Courier'})
+                                </span>
+                                {order.trackingNumber && (
+                                  <div className="text-[10px] font-mono text-gray-500 mt-1">
+                                    AWB: <span className="text-blue-700 font-bold">{order.trackingNumber}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {isDelivered && (
+                              <div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                  <span>✅</span> Delivered
+                                </span>
+                                {order.returnStatus && (
+                                  <div className="mt-1">
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-700">
+                                      Return: {order.returnStatus}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {isCancelled && (
+                              <div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                                  <span>❌</span> Cancelled
+                                </span>
+                                {order.cancellationReason && (
+                                  <p className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[140px]">
+                                    {order.cancellationReason}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => openDispatchModal(order)}
+                              className="px-3 py-1.5 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 rounded-xl font-bold text-xs border border-saffron-200 transition cursor-pointer"
+                            >
+                              ✏️ Update Logistics
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Coupons & Promo Codes View */
+        <div className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-gray-400">Total Promo Codes</span>
+              <p className="text-2xl font-black text-gray-900 mt-1">{coupons.length}</p>
+              <span className="text-[11px] text-gray-500">Configured in store</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-emerald-600">Active Coupons</span>
+              <p className="text-2xl font-black text-emerald-700 mt-1">{coupons.filter(c => c.isActive).length}</p>
+              <span className="text-[11px] text-gray-500">Redeemable at checkout</span>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+              <span className="text-[10px] uppercase font-bold text-saffron-600">Total Redemptions</span>
+              <p className="text-2xl font-black text-saffron-600 mt-1">
+                {coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0)}
+              </p>
+              <span className="text-[11px] text-gray-500">Applied by customers on orders</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            {isLoadingCoupons ? (
+              <div className="p-12 text-center">
+                <div className="inline-block animate-spin text-2xl text-saffron-500">🌀</div>
+                <p className="text-xs text-gray-500 font-semibold mt-2">Loading promo codes...</p>
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className="p-12 text-center">
+                <span className="text-4xl">🎟️</span>
+                <h3 className="text-base font-bold text-gray-800 mt-2">No Promo Codes Created</h3>
+                <p className="text-xs text-gray-500 mt-1">Create promotional discount codes for your customers.</p>
+                <button
+                  type="button"
+                  onClick={() => setIsCouponModalOpen(true)}
+                  className="mt-4 px-4 py-2 bg-saffron-500 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
+                >
+                  + Create First Promo Code
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                      <th className="py-3 px-4">Coupon Code</th>
+                      <th className="py-3 px-4">Discount Structure</th>
+                      <th className="py-3 px-4">Min. Cart Value</th>
+                      <th className="py-3 px-4">Times Redeemed</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {coupons.map((coupon) => (
+                      <tr key={coupon._id} className="hover:bg-gray-50/70 transition">
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-1 rounded-lg bg-saffron-50 text-saffron-800 font-mono font-black text-xs border border-saffron-200">
+                            {coupon.code}
+                          </span>
+                          <p className="text-[11px] text-gray-500 mt-1">{coupon.description || 'No description'}</p>
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-gray-900">
+                          {coupon.discountType === 'percent' && (
+                            <span>{coupon.discountValue}% OFF {coupon.maxDiscount ? `(Capped at ₹${coupon.maxDiscount})` : ''}</span>
+                          )}
+                          {coupon.discountType === 'flat' && (
+                            <span>Flat ₹{coupon.discountValue} OFF</span>
+                          )}
+                          {coupon.discountType === 'shipping' && (
+                            <span>FREE Delivery (₹{coupon.discountValue} waiver)</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-gray-700">
+                          {coupon.minOrderValue > 0 ? `₹${coupon.minOrderValue.toLocaleString()}` : 'No Minimum'}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-gray-900">{coupon.usageCount || 0}</span>
+                          <span className="text-gray-400 text-[10px] ml-1">uses</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCoupon(coupon)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
+                              coupon.isActive
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                          >
+                            {coupon.isActive ? '● Active' : '○ Inactive'}
+                          </button>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCoupon(coupon)}
+                              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-bold transition cursor-pointer"
+                            >
+                              {coupon.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCoupon(coupon)}
+                              className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
         </main>
       </div>
 
@@ -605,7 +1163,6 @@ const AdminInventory = () => {
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
                 <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                  <span>✨</span>
                   <span>{editingProduct ? 'Edit Inventory Master Product' : 'Push New Master Product to Database'}</span>
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -1072,6 +1629,275 @@ const AdminInventory = () => {
         </div>
       )}
 
+      {/* Order Fulfillment & Logistics Modal */}
+      {selectedFulfillmentOrder && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                  <span>🚚</span>
+                  <span>Fulfillment & Logistics Dispatch</span>
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Order Ref: <span className="font-mono font-bold text-gray-800">{selectedFulfillmentOrder.orderId || `#${selectedFulfillmentOrder._id.slice(-8).toUpperCase()}`}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedFulfillmentOrder(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-xs transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Customer & Destination Summary */}
+            <div className="mt-4 p-4 rounded-2xl bg-neutral-50 border border-gray-200 text-xs space-y-1.5">
+              <div className="flex justify-between items-center text-gray-500 text-[11px] font-semibold">
+                <span>DESTINATION DETAILS</span>
+                <span className="font-bold text-gray-700">₹{selectedFulfillmentOrder.totalAmount?.toLocaleString()} ({selectedFulfillmentOrder.paymentMethod})</span>
+              </div>
+              <p className="font-bold text-gray-900">{selectedFulfillmentOrder.shippingAddress?.fullName || 'Mindful Customer'}</p>
+              <p className="text-gray-600">
+                {selectedFulfillmentOrder.shippingAddress?.street}, {selectedFulfillmentOrder.shippingAddress?.city}, {selectedFulfillmentOrder.shippingAddress?.state} - {selectedFulfillmentOrder.shippingAddress?.pincode}
+              </p>
+              <p className="text-gray-500 font-mono text-[11px]">📞 {selectedFulfillmentOrder.shippingAddress?.phone || 'No phone provided'}</p>
+            </div>
+
+            <form onSubmit={handleUpdateOrderStatus} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Shipment / Order Status *
+                </label>
+                <select
+                  value={dispatchForm.status}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, status: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-800 bg-white focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                >
+                  <option value="Processing">Processing (In Packing & Warehouse Prep)</option>
+                  <option value="Shipped">Shipped (Dispatched with Courier)</option>
+                  <option value="Delivered">Delivered (Handed over to Customer)</option>
+                  <option value="Cancelled">Cancelled (Order Cancelled & Restocked)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Logistics & Courier Partner *
+                </label>
+                <select
+                  value={dispatchForm.courierName}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, courierName: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                >
+                  <option value="BlueDart Express">BlueDart Express (Air & Surface)</option>
+                  <option value="Delhivery">Delhivery Surface & Express</option>
+                  <option value="DTDC Express">DTDC Premium Cargo</option>
+                  <option value="Ekart Logistics">Ekart Logistics</option>
+                  <option value="India Post Speed Post">India Post Speed Post</option>
+                  <option value="Shadowfax">Shadowfax Hyperlocal & Nationwide</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Courier Tracking Number / AWB *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. TRK-7849201"
+                    value={dispatchForm.trackingNumber}
+                    onChange={(e) => setDispatchForm({ ...dispatchForm, trackingNumber: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono font-bold text-gray-800 bg-white focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDispatchForm({
+                        ...dispatchForm,
+                        trackingNumber: `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`
+                      })
+                    }
+                    className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    title="Generate randomized AWB"
+                  >
+                    🎲 Generate
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">This tracking code will be visible to the customer in their order timeline.</p>
+              </div>
+
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFulfillmentOrder(null)}
+                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingOrder}
+                  className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {isUpdatingOrder && <span className="animate-spin">🌀</span>}
+                  <span>{isUpdatingOrder ? 'Updating...' : 'Save Logistics Update'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Promo Code Modal */}
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                  <span>🎟️</span>
+                  <span>Create New Promotional Code</span>
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Set discounts, minimum order threshold, and usage limits
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCouponModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-xs transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCoupon} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Coupon Code *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. DIWALI30, MEDITATE15"
+                  value={couponFormData.code}
+                  onChange={(e) => setCouponFormData({ ...couponFormData, code: e.target.value.toUpperCase() })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Discount Type *
+                  </label>
+                  <select
+                    value={couponFormData.discountType}
+                    onChange={(e) => setCouponFormData({ ...couponFormData, discountType: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-saffron-400 bg-white"
+                  >
+                    <option value="percent">Percentage (%) Off</option>
+                    <option value="flat">Flat Amount (₹) Off</option>
+                    <option value="shipping">Free Delivery Waiver</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {couponFormData.discountType === 'percent' ? 'Discount Percentage (%) *' : 'Discount Value (₹) *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    placeholder={couponFormData.discountType === 'percent' ? '20' : '500'}
+                    value={couponFormData.discountValue}
+                    onChange={(e) => setCouponFormData({ ...couponFormData, discountValue: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Min. Cart Subtotal (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 999"
+                    value={couponFormData.minOrderValue}
+                    onChange={(e) => setCouponFormData({ ...couponFormData, minOrderValue: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Max Discount Cap (₹, Optional)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1000"
+                    value={couponFormData.maxDiscount}
+                    onChange={(e) => setCouponFormData({ ...couponFormData, maxDiscount: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Description / Marketing Tagline
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 20% OFF on all mindful wellness essentials"
+                  value={couponFormData.description}
+                  onChange={(e) => setCouponFormData({ ...couponFormData, description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Expiry Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={couponFormData.expiresAt}
+                  onChange={(e) => setCouponFormData({ ...couponFormData, expiresAt: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                />
+              </div>
+
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsCouponModalOpen(false)}
+                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingCoupon}
+                  className="px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {isSubmittingCoupon ? 'Creating...' : 'Save & Publish Promo Code'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Toast Feedback */}
       {feedback && (
         <div className="fixed bottom-6 right-6 z-50">
@@ -1088,7 +1914,7 @@ const AdminInventory = () => {
         </div>
       )}
 
-      <Footer />
+      <AdminFooter />
     </div>
   );
 };

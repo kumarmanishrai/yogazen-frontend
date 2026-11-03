@@ -10,7 +10,7 @@ const TrainerBanner = ({ variant = 'full' }) => {
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-saffron-700 bg-saffron-100/80 px-2.5 py-1 rounded-full">
             Instructor Portal
           </span>
-          <h4 className="text-base font-bold text-gray-900 mt-2">Teach on YogaZen</h4>
+          <h4 className="text-base font-bold text-gray-900 mt-2">Train on YogaZen</h4>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">
             Reach conscious students worldwide. Publish your courses, schedule live classes, and manage payouts.
           </p>

@@ -2,11 +2,30 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { apiTrainerGetCourses, apiTrainerCreateCourse } from '../services/api';
+import { useNotification } from '../context/NotificationContext';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  apiTrainerGetCourses,
+  apiTrainerCreateCourse,
+  apiTrainerAddClass,
+  apiTrainerDeleteClass,
+  apiTrainerSetClassLive
+} from '../services/api';
+
+// Helper to extract YouTube Video or Live ID from various URL formats
+const extractYouTubeId = (url) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+  const regExp = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+  const match = trimmed.match(regExp);
+  return match ? match[1] : '';
+};
 
 const TrainerDashboard = () => {
+  const navigate = useNavigate();
   const { currentUser, role, isLoggedIn, isLoading, openAuthModal } = useAuth();
+  const { showNotification, showConfirm } = useNotification();
 
   // Helper to format dates
   const formatDate = (dateStr) => {
@@ -46,6 +65,10 @@ const TrainerDashboard = () => {
 
   // Profile Required Warning Modal State
   const [isProfileRequiredModalOpen, setIsProfileRequiredModalOpen] = useState(false);
+
+  // Live Studio Player Modal State (YouTube live/video embed)
+  const [activeStreamingClass, setActiveStreamingClass] = useState(null); // { course, classItem }
+  const [isSubmittingClass, setIsSubmittingClass] = useState(false);
 
   // --- Add Course Modal State ---
   const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
@@ -205,48 +228,92 @@ const TrainerDashboard = () => {
     setIsAddClassModalOpen(true);
   };
 
-  // Handler: Add Class to Course
-  const handleCreateClass = (e) => {
+  // Handler: Add Class to Course (Persisted to Backend MongoDB)
+  const handleCreateClass = async (e) => {
     e.preventDefault();
-    const newClass = {
-      id: `cls-${Date.now()}`,
-      title: classFormData.title,
-      description: classFormData.description,
-      duration: Number(classFormData.duration) || 45,
-      scheduledAt: new Date(classFormData.scheduledAt).toISOString(),
-      type: classFormData.type,
-      meetingUrl: classFormData.meetingUrl || 'https://meet.yogazen.com/live',
-    };
+    if (!targetCourseId) return;
 
-    setCourses((prevCourses) =>
-      prevCourses.map((c) => {
-        if ((c._id || c.id) === targetCourseId) {
-          return {
-            ...c,
-            classes: [...(c.classes || []), newClass],
-          };
-        }
-        return c;
-      })
-    );
+    if (classFormData.scheduledAt) {
+      const schedDate = new Date(classFormData.scheduledAt);
+      if (schedDate < new Date(Date.now() - 2 * 60 * 1000)) {
+        showNotification('Scheduled date & time cannot be in the past.', 'warning');
+        return;
+      }
+    }
 
-    setIsAddClassModalOpen(false);
+    try {
+      setIsSubmittingClass(true);
+      const ytId = extractYouTubeId(classFormData.meetingUrl);
+      const payload = {
+        title: classFormData.title.trim(),
+        description: classFormData.description.trim(),
+        duration: `${Number(classFormData.duration) || 45} mins`,
+        scheduledAt: new Date(classFormData.scheduledAt).toISOString(),
+        type: classFormData.type,
+        meetingUrl: classFormData.meetingUrl.trim(),
+        videoUrl: classFormData.meetingUrl.trim(),
+        youtubeVideoId: ytId
+      };
+
+      const res = await apiTrainerAddClass(targetCourseId, payload);
+      if (res?.success) {
+        showNotification('Class scheduled and saved to course curriculum successfully!', 'success');
+        await fetchCourses();
+        setIsAddClassModalOpen(false);
+      }
+    } catch (err) {
+      showNotification(err.message || 'Failed to save class to database', 'error');
+    } finally {
+      setIsSubmittingClass(false);
+    }
   };
 
-  // Handler: Delete Class
-  const handleDeleteClass = (courseId, classId) => {
-    if (window.confirm('Are you sure you want to remove this class from the curriculum?')) {
-      setCourses((prev) =>
-        prev.map((c) => {
-          if ((c._id || c.id) === courseId) {
-            return {
-              ...c,
-              classes: (c.classes || []).filter((cls) => (cls._id || cls.id) !== classId),
-            };
-          }
-          return c;
-        })
-      );
+  // Handler: Delete Class (Persisted to Backend)
+  const handleDeleteClass = async (courseId, classId) => {
+    const confirmed = await showConfirm({
+      title: 'Remove Class',
+      message: 'Are you sure you want to permanently remove this class from the course curriculum?',
+      confirmText: 'Remove Class',
+      cancelText: 'Keep Class',
+      type: 'danger'
+    });
+
+    if (confirmed) {
+      try {
+        const res = await apiTrainerDeleteClass(courseId, classId);
+        if (res?.success) {
+          showNotification('Class removed from course curriculum.', 'success');
+          await fetchCourses();
+        }
+      } catch (err) {
+        showNotification(err.message || 'Failed to delete class', 'error');
+      }
+    }
+  };
+
+  // Handler: Start / End Live Stream for Class
+  const handleToggleLiveStatus = async (courseId, cls) => {
+    const nextLiveState = !cls.isLive;
+    try {
+      const res = await apiTrainerSetClassLive(courseId, cls._id || cls.id, {
+        isLive: nextLiveState,
+        youtubeVideoId: cls.youtubeVideoId || extractYouTubeId(cls.videoUrl || cls.meetingUrl),
+        videoUrl: cls.videoUrl || cls.meetingUrl
+      });
+      if (res?.success) {
+        showNotification(res.message, 'success');
+        await fetchCourses();
+        if (nextLiveState) {
+          // Open the interactive studio player for the trainer
+          const updatedCourse = courses.find((c) => (c._id || c.id) === courseId);
+          setActiveStreamingClass({
+            course: updatedCourse,
+            classItem: res.class || { ...cls, isLive: true }
+          });
+        }
+      }
+    } catch (err) {
+      showNotification(err.message || 'Failed to update live stream status', 'error');
     }
   };
 
@@ -320,7 +387,7 @@ const TrainerDashboard = () => {
                 to="/trainer/register"
                 className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
               >
-                Apply to Teach on YogaZen 🌿
+                Apply to Train on YogaZen 🌿
               </Link>
             </div>
           </div>
@@ -384,7 +451,7 @@ const TrainerDashboard = () => {
                 <div>
                   <h3 className="text-base font-bold text-amber-900">Your Trainer Profile is Incomplete</h3>
                   <p className="text-xs text-amber-700 mt-1 leading-relaxed max-w-2xl">
-                    To maintain quality teaching standards on YogaZen, trainers must complete their profile before adding or publishing courses. Please enter your <strong>Full Name</strong>, <strong>Contact Phone</strong>, <strong>Bio</strong>, and <strong>Teaching Specializations</strong>.
+                    To maintain quality training standards on YogaZen, trainers must complete their profile before adding or publishing courses. Please enter your <strong>Full Name</strong>, <strong>Contact Phone</strong>, <strong>Bio</strong>, and <strong>Training Specializations</strong>.
                   </p>
                 </div>
               </div>
@@ -413,9 +480,19 @@ const TrainerDashboard = () => {
                 {courses.reduce((acc, c) => acc + (c.classes?.length || 0), 0)}
               </p>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Revenue</span>
-              <p className="text-2xl font-black text-green-600 mt-1">₹{currentUser?.totalEarnings ?? 0}</p>
+            <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-gray-100 dark:border-stone-800 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Net Earnings (80%)</span>
+              <p className="text-2xl font-black text-green-600 mt-1">₹{(currentUser?.totalEarnings ?? 0).toLocaleString('en-IN')}</p>
+              <span className="text-[10px] text-gray-400 block mt-0.5">20% deducted as platform commission</span>
+            </div>
+            <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-gray-100 dark:border-stone-800 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Gross Course Sales</span>
+              <p className="text-2xl font-black text-saffron-600 mt-1">
+                ₹{Math.round((currentUser?.totalEarnings ?? 0) / 0.8).toLocaleString('en-IN')}
+              </p>
+              <span className="text-[10px] text-gray-400 block mt-0.5">
+                YogaZen Fee (20%): ₹{Math.round(((currentUser?.totalEarnings ?? 0) / 0.8) * 0.2).toLocaleString('en-IN')}
+              </span>
             </div>
           </div>
 
@@ -489,6 +566,14 @@ const TrainerDashboard = () => {
                         </span>
                       </div>
 
+                      {/* Prominent Course Name Badge */}
+                      <div className="mb-2">
+                        <span className="text-[11px] font-black text-saffron-700 bg-saffron-50 px-2.5 py-1 rounded-xl border border-saffron-200/70 inline-flex items-center gap-1.5 shadow-2xs">
+                          <span>📚 Course:</span>
+                          <span className="truncate max-w-[210px]">{cls.courseTitle}</span>
+                        </span>
+                      </div>
+
                       {/* Schedule Time */}
                       <div className="text-xs font-bold text-saffron-600 mb-1 flex items-center gap-1.5">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -507,14 +592,34 @@ const TrainerDashboard = () => {
                         Course: <span className="text-gray-700 font-semibold">{cls.courseTitle}</span>
                       </div>
 
-                      <button
-                        onClick={() =>
-                          alert(`Starting ${cls.type}: "${cls.title}". Meeting Link: ${cls.meetingUrl}`)
-                        }
-                        className="px-3.5 py-1.5 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm"
-                      >
-                        {cls.type === 'Live Stream' ? 'Go Live 🔴' : 'View Class'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {cls.type === 'Live Stream' && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLiveStatus(cls.courseId, cls)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                              cls.isLive
+                                ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
+                                : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            {cls.isLive ? 'End Live ⏹' : 'Go Live 🔴'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetCourse = courses.find((c) => (c._id || c.id) === cls.courseId);
+                            setActiveStreamingClass({
+                              course: targetCourse || { title: cls.courseTitle },
+                              classItem: cls
+                            });
+                          }}
+                          className="px-3.5 py-1.5 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1"
+                        >
+                          <span>Studio Player ▶</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -583,7 +688,10 @@ const TrainerDashboard = () => {
                       className="bg-white rounded-3xl border border-saffron-100/80 shadow-sm overflow-hidden transition"
                     >
                       {/* Course Card Header */}
-                      <div className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-white via-white to-saffron-50/20">
+                      <div
+                        onClick={() => navigate(`/trainer/courses/${courseId}`)}
+                        className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-white via-white to-saffron-50/20 hover:bg-saffron-50/30 transition cursor-pointer group"
+                      >
                         <div className="space-y-1.5 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-saffron-100 text-saffron-800">
@@ -592,27 +700,63 @@ const TrainerDashboard = () => {
                             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
                               {course.level}
                             </span>
+                            <span className="text-[10px] font-bold text-saffron-600 opacity-0 group-hover:opacity-100 transition">
+                              Click to open course studio →
+                            </span>
                           </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-saffron-700 transition">
                             {courseIndex + 1}. {course.title}
                           </h3>
+                          <div className="flex items-center gap-2 pt-0.5 text-xs">
+                            <span className="text-amber-500 font-bold flex items-center gap-0.5">
+                              ★ {course.rating ? course.rating.toFixed(1) : '5.0'}
+                            </span>
+                            <span className="text-gray-400">
+                              ({course.reviews?.length || course.reviewsCount || 0} reviews)
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="text-gray-500">
+                              👥 {course.enrolledCount || 0} enrolled
+                            </span>
+                          </div>
                           <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
                             {course.description}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-3 sm:gap-4 justify-between md:justify-end border-t md:border-0 pt-3 md:pt-0">
-                          <div className="text-left md:text-right">
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-2 sm:gap-3 justify-between md:justify-end border-t md:border-0 pt-3 md:pt-0 flex-wrap"
+                        >
+                          <div className="text-left md:text-right mr-2">
                             <span className="text-[11px] text-gray-400 block">Course Price</span>
                             <span className="text-lg font-extrabold text-saffron-600">
                               {course.price > 0 ? `₹${course.price}` : 'Free'}
                             </span>
                           </div>
 
+                          {/* Dedicated Course Studio & Classes Page */}
+                          <Link
+                            to={`/trainer/courses/${courseId}`}
+                            className="px-3 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                            title="Open Course Studio with all upcoming and recorded classes"
+                          >
+                            <span>📹 Classes & Studio (→)</span>
+                          </Link>
+
+                          {/* View public course page */}
+                          <Link
+                            to={`/courses/${courseId}`}
+                            className="px-3 py-2 bg-gray-100 hover:bg-saffron-50 text-gray-700 hover:text-saffron-700 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                            title="Open course details page"
+                          >
+                            <span>👁️ Course Page</span>
+                          </Link>
+
                           {/* Button to add class to this specific course */}
                           <button
                             onClick={() => openAddClassForCourse(courseId)}
-                            className="px-4 py-2 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                            className="px-3 py-2 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1"
                           >
                             <span>+</span> Add Class
                           </button>
@@ -645,7 +789,7 @@ const TrainerDashboard = () => {
                               Curriculum Classes ({courseClasses.length})
                             </h4>
                             <span className="text-xs text-gray-400">
-                              Total Duration: {courseClasses.reduce((sum, c) => sum + (c.duration || 0), 0)} mins
+                              Total Duration: {courseClasses.reduce((sum, c) => sum + (c.duration ? parseInt(c.duration) || 45 : 45), 0)} mins
                             </span>
                           </div>
 
@@ -666,14 +810,16 @@ const TrainerDashboard = () => {
                                 return (
                                   <div
                                     key={classId}
-                                    className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/80 hover:border-saffron-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
+                                    className={`bg-white p-4 sm:p-5 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                                      cls.isLive ? 'border-red-300 ring-2 ring-red-500/20' : 'border-gray-200/80 hover:border-saffron-200'
+                                    }`}
                                   >
                                     <div className="flex items-start gap-3.5">
                                       <div className="w-8 h-8 rounded-full bg-saffron-50 text-saffron-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                                         #{classIndex + 1}
                                       </div>
                                       <div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                           <h5 className="text-sm font-bold text-gray-900">{cls.title}</h5>
                                           <span
                                             className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
@@ -684,10 +830,20 @@ const TrainerDashboard = () => {
                                           >
                                             {cls.type}
                                           </span>
+                                          {cls.isLive && (
+                                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-red-600 text-white animate-pulse flex items-center gap-1">
+                                              <span>●</span> LIVE NOW
+                                            </span>
+                                          )}
+                                          {cls.status === 'completed' && (
+                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                              ✓ Recorded
+                                            </span>
+                                          )}
                                         </div>
                                         <p className="text-xs text-gray-500 mt-0.5">{cls.description}</p>
                                         <div className="flex items-center gap-4 text-[11px] text-gray-400 mt-2 font-medium">
-                                          <span>⏱️ {cls.duration} mins</span>
+                                          <span>⏱️ {cls.duration}</span>
                                           {cls.scheduledAt && (
                                             <span className="text-saffron-700 font-semibold">
                                               📅 Scheduled: {formatDate(cls.scheduledAt)}
@@ -698,15 +854,33 @@ const TrainerDashboard = () => {
                                     </div>
 
                                     <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
+                                      {cls.type === 'Live Stream' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleLiveStatus(courseId, cls)}
+                                          className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${
+                                            cls.isLive
+                                              ? 'bg-red-600 hover:bg-red-700 text-white'
+                                              : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                          }`}
+                                        >
+                                          {cls.isLive ? 'End Stream ⏹' : 'Go Live 🔴'}
+                                        </button>
+                                      )}
                                       <button
+                                        type="button"
                                         onClick={() =>
-                                          alert(`Previewing Class #${classIndex + 1}: ${cls.title}\nLink: ${cls.meetingUrl}`)
+                                          setActiveStreamingClass({
+                                            course,
+                                            classItem: cls
+                                          })
                                         }
-                                        className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:text-saffron-600 bg-gray-50 hover:bg-saffron-50 rounded-xl transition"
+                                        className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:text-saffron-600 bg-gray-50 hover:bg-saffron-50 rounded-xl transition flex items-center gap-1"
                                       >
-                                        Preview
+                                        <span>▶ Studio Player</span>
                                       </button>
                                       <button
+                                        type="button"
                                         onClick={() => handleDeleteClass(courseId, classId)}
                                         className="p-1.5 text-gray-400 hover:text-red-500 transition"
                                         title="Delete Class"
@@ -721,6 +895,46 @@ const TrainerDashboard = () => {
                               })}
                             </div>
                           )}
+
+                          {/* STUDENT REVIEWS SECTION */}
+                          <div className="mt-6 pt-5 border-t border-gray-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                                <span>⭐</span> Student Reviews & Ratings ({course.reviews?.length || 0})
+                              </h4>
+                              <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold">
+                                <span>★ {course.rating ? course.rating.toFixed(1) : '5.0'}</span>
+                                <span className="text-gray-400 font-normal">/ 5.0</span>
+                              </div>
+                            </div>
+
+                            {!course.reviews || course.reviews.length === 0 ? (
+                              <div className="p-4 rounded-xl bg-white border border-gray-100 text-center text-xs text-gray-400">
+                                No student reviews yet for this course.
+                              </div>
+                            ) : (
+                              <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                                {course.reviews.map((rev, rIdx) => (
+                                  <div key={rIdx} className="p-3 bg-white rounded-xl border border-gray-100 text-xs space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-bold text-gray-900">{rev.userName || 'Student Yogi'}</span>
+                                        <span className="text-amber-400 font-bold">
+                                          {'★'.repeat(rev.rating || 5)}{'☆'.repeat(5 - (rev.rating || 5))}
+                                        </span>
+                                      </div>
+                                      <span className="text-[10px] text-gray-400">
+                                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Recently'}
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 text-[11px] leading-relaxed">
+                                      "{rev.comment}"
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -743,7 +957,7 @@ const TrainerDashboard = () => {
             </div>
             <h3 className="text-lg font-bold text-gray-900">Complete Your Profile First</h3>
             <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-              Before adding a course, YogaZen requires you to complete your instructor details (<strong>Full Name</strong>, <strong>Contact Number</strong>, <strong>Bio</strong>, and <strong>Teaching Specializations</strong>) so students can learn about your experience and expertise.
+              Before adding a course, YogaZen requires you to complete your instructor details (<strong>Full Name</strong>, <strong>Contact Number</strong>, <strong>Bio</strong>, and <strong>Training Specializations</strong>) so students can learn about your experience and expertise.
             </p>
             <div className="mt-6 flex flex-col gap-2.5">
               <Link
@@ -950,10 +1164,14 @@ const TrainerDashboard = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Scheduled Date & Time (Select date in next 7 days to feature on dashboard)
+                  Scheduled Date & Time <span className="text-red-500">*</span>
+                  <span className="text-[10px] text-gray-400 font-normal ml-1">
+                    (Past dates strictly blocked)
+                  </span>
                 </label>
                 <input
                   type="datetime-local"
+                  min={new Date().toISOString().slice(0, 16)}
                   value={classFormData.scheduledAt}
                   onChange={(e) => setClassFormData({ ...classFormData, scheduledAt: e.target.value })}
                   required
@@ -962,22 +1180,35 @@ const TrainerDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Meeting URL or Video Link</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  YouTube Live / Video Link (or Custom Meeting URL)
+                </label>
                 <input
-                  type="url"
+                  type="text"
                   value={classFormData.meetingUrl}
                   onChange={(e) => setClassFormData({ ...classFormData, meetingUrl: e.target.value })}
-                  placeholder="https://meet.yogazen.com/session-xyz"
+                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
                   className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm"
                 />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  💡 Paste any YouTube Live stream or video URL. Students will be able to watch it live or replay it directly on YogaZen!
+                </p>
+                {extractYouTubeId(classFormData.meetingUrl) && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-emerald-800 font-bold">
+                    <span>✓</span>
+                    <span>YouTube ID Detected: <code className="bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-950 font-mono">{extractYouTubeId(classFormData.meetingUrl)}</code> (Ready for in-platform Live Studio embed)</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-3">
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl transition"
+                  disabled={isSubmittingClass}
+                  className="flex-1 py-2.5 bg-saffron-500 hover:bg-saffron-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2"
                 >
-                  Add Class
+                  {isSubmittingClass && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
+                  <span>{isSubmittingClass ? 'Saving to Database...' : 'Schedule & Save Class'}</span>
                 </button>
                 <button
                   type="button"
@@ -988,6 +1219,145 @@ const TrainerDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* IN-PLATFORM LIVE STUDIO PLAYER MODAL (TRAINER VIEW) */}
+      {/* ============================================================== */}
+      {activeStreamingClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+            {/* Player Header */}
+            <div className="px-6 py-4 bg-gray-950 border-b border-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+                <div>
+                  <h3 className="text-white text-sm sm:text-base font-bold flex items-center gap-2">
+                    <span>{activeStreamingClass.classItem?.title}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+                      activeStreamingClass.classItem?.isLive
+                        ? 'bg-red-600 text-white animate-pulse'
+                        : 'bg-gray-800 text-gray-300'
+                    }`}>
+                      {activeStreamingClass.classItem?.isLive ? '🔴 LIVE STREAMING' : '📼 CLASS PREVIEW'}
+                    </span>
+                  </h3>
+                  <p className="text-gray-400 text-xs">
+                    Course: {activeStreamingClass.course?.title || 'YogaZen Course'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeStreamingClass.classItem?.type === 'Live Stream' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleToggleLiveStatus(
+                        activeStreamingClass.course?._id || activeStreamingClass.course?.id,
+                        activeStreamingClass.classItem
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm ${
+                      activeStreamingClass.classItem?.isLive
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    }`}
+                  >
+                    {activeStreamingClass.classItem?.isLive ? 'End Live Stream ⏹' : 'Start Live Stream 🔴'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActiveStreamingClass(null)}
+                  className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Video Player Embed Area */}
+            <div className="relative w-full aspect-video bg-black flex items-center justify-center">
+              {(() => {
+                const ytId =
+                  activeStreamingClass.classItem?.youtubeVideoId ||
+                  extractYouTubeId(activeStreamingClass.classItem?.videoUrl || activeStreamingClass.classItem?.meetingUrl);
+                
+                if (ytId) {
+                  return (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0`}
+                      title={activeStreamingClass.classItem?.title}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    ></iframe>
+                  );
+                }
+
+                if (activeStreamingClass.classItem?.meetingUrl) {
+                  return (
+                    <div className="p-8 text-center space-y-4">
+                      <span className="text-4xl block">📹</span>
+                      <p className="text-white text-sm font-semibold">
+                        Custom External Session Link Configured
+                      </p>
+                      <a
+                        href={activeStreamingClass.classItem.meetingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block px-5 py-2.5 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl transition"
+                      >
+                        Open External Meeting Room (→)
+                      </a>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-8 text-center space-y-2">
+                    <span className="text-4xl block">🧘</span>
+                    <p className="text-gray-400 text-xs">
+                      No video stream URL configured for this class yet. Edit the class to attach a YouTube Live stream ID or video link.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Live Studio Controls & Instructions */}
+            <div className="p-5 bg-gray-950 border-t border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-gray-400">
+              <div className="space-y-1">
+                <span className="text-white font-bold block">
+                  Interactive Live Studio
+                </span>
+                <p className="text-[11px] text-gray-400">
+                  Students enrolled in this course can view this session simultaneously in their dedicated Learning Studio.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ytId =
+                      activeStreamingClass.classItem?.youtubeVideoId ||
+                      extractYouTubeId(activeStreamingClass.classItem?.videoUrl || activeStreamingClass.classItem?.meetingUrl);
+                    if (ytId) {
+                      window.open(`https://www.youtube.com/live_dashboard?v=${ytId}`, '_blank');
+                    } else {
+                      window.open('https://studio.youtube.com', '_blank');
+                    }
+                  }}
+                  className="px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold rounded-xl transition flex items-center gap-1.5"
+                >
+                  <span>📺 YouTube Live Studio</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

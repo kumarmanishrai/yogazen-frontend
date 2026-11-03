@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
@@ -12,6 +12,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { registerUser } = useAuth();
 
   const handleChange = (e) => {
@@ -40,8 +41,20 @@ const Register = () => {
     setError('');
 
     try {
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get('redirect');
+      const checkout = params.get('checkout');
       await registerUser(formData.email, formData.password);
-      navigate('/');
+      if (redirect) {
+        if (checkout === 'true') {
+          try {
+            sessionStorage.setItem('yogazen_pending_checkout', 'true');
+          } catch (e) {}
+        }
+        navigate(redirect);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

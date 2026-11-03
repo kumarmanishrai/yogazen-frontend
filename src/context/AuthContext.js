@@ -7,7 +7,10 @@ import {
   apiLogoutUser,
   apiLogoutTrainer,
   apiGetUserProfile,
-  apiGetTrainerProfile
+  apiGetTrainerProfile,
+  apiGetAdminProfile,
+  apiAdminLogin,
+  apiAdminLogout
 } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -35,6 +38,17 @@ export const AuthProvider = ({ children }) => {
     setIsAuthModalOpen(false);
   };
 
+  // Listen for background session expiration event
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setCurrentUser(null);
+      setRole(null);
+    };
+
+    window.addEventListener('yogazen:auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('yogazen:auth-expired', handleAuthExpired);
+  }, []);
+
   // Check existing session on mount
   useEffect(() => {
     const checkActiveSession = async () => {
@@ -45,7 +59,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        if (savedRole === 'trainer') {
+        if (savedRole === 'admin' || savedRole === 'superadmin') {
+          const res = await apiGetAdminProfile();
+          if (res?.admin) {
+            setCurrentUser(res.admin);
+            setRole(res.admin.role || savedRole);
+            localStorage.setItem('yogazen_user', JSON.stringify(res.admin));
+          }
+        } else if (savedRole === 'trainer') {
           const res = await apiGetTrainerProfile();
           if (res?.trainer) {
             setCurrentUser(res.trainer);
@@ -119,13 +140,33 @@ export const AuthProvider = ({ children }) => {
     return trainerData;
   };
 
+  // Admin Login handler
+  const loginAdmin = async (credentials) => {
+    const data = await apiAdminLogin(credentials);
+    const adminData = data.admin;
+    setCurrentUser(adminData);
+    setRole(adminData.role || 'admin');
+    localStorage.setItem('yogazen_user', JSON.stringify(adminData));
+    localStorage.setItem('yogazen_role', adminData.role || 'admin');
+    closeAuthModal();
+    return adminData;
+  };
+
   // Logout handler
   const logout = async () => {
     try {
-      if (role === 'trainer') {
-        await apiLogoutTrainer();
+      const payload = {
+        email: currentUser?.email,
+        role: role || currentUser?.role,
+        id: currentUser?._id || currentUser?.id,
+        name: currentUser?.name
+      };
+      if (role === 'admin' || role === 'superadmin') {
+        await apiAdminLogout(payload);
+      } else if (role === 'trainer') {
+        await apiLogoutTrainer(payload);
       } else {
-        await apiLogoutUser();
+        await apiLogoutUser(payload);
       }
     } catch (e) {
       console.error('Logout error:', e);
@@ -134,7 +175,16 @@ export const AuthProvider = ({ children }) => {
       setRole(null);
       localStorage.removeItem('yogazen_user');
       localStorage.removeItem('yogazen_role');
+      localStorage.removeItem('yogazen_token');
     }
+  };
+
+  // Check if admin has specific module permission
+  const hasPermission = (permission) => {
+    if (!currentUser) return false;
+    if (role === 'superadmin' || currentUser.role === 'superadmin') return true;
+    const perms = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
+    return perms.includes('all') || perms.includes(permission);
   };
 
   // Update current user in state & localStorage
@@ -150,8 +200,12 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     role,
     isLoggedIn: Boolean(currentUser),
+    isAdmin: role === 'admin' || role === 'superadmin',
+    isSuperAdmin: role === 'superadmin',
+    hasPermission,
     isLoading,
     login,
+    loginAdmin,
     registerUser,
     registerTrainer,
     logout,

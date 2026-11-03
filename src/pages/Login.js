@@ -27,9 +27,19 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get('redirect');
+      const checkout = params.get('checkout');
       const account = await login(email, password, isTrainer);
       if (account.role === 'trainer') {
         navigate('/trainer/dashboard');
+      } else if (redirect) {
+        if (checkout === 'true') {
+          try {
+            sessionStorage.setItem('yogazen_pending_checkout', 'true');
+          } catch (e) {}
+        }
+        navigate(redirect);
       } else {
         navigate('/');
       }
@@ -151,7 +161,7 @@ const Login = () => {
               </Link>
             </p>
             <p>
-              Are you a teacher?{' '}
+              Are you a trainer?{' '}
               <Link to="/trainer/register" className="font-bold text-saffron-700 hover:underline">
                 Register as a Trainer
               </Link>

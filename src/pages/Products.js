@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { apiGetProducts, apiGetCategories } from '../services/api';
 import tracker from '../services/analyticsTracker';
+import { useCartWishlist } from '../context/CartWishlistContext';
+import { useNotification } from '../context/NotificationContext';
 
 const PRICE_RANGES = [
   { label: 'All Prices', min: '', max: '' },
@@ -24,6 +26,7 @@ const Products = () => {
   const minPriceParam = searchParams.get('minPrice') || '';
   const maxPriceParam = searchParams.get('maxPrice') || '';
   const inStockParam = searchParams.get('inStock') === 'true';
+  const minRatingParam = searchParams.get('minRating') || '';
 
   // Component state
   const [products, setProducts] = useState([]);
@@ -36,6 +39,78 @@ const Products = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchQuery);
+
+  const { cart, addToCart, updateCartItem, removeFromCart, wishlist, toggleWishlist } = useCartWishlist();
+  const { showNotification } = useNotification();
+
+  const isSavedInWishlist = (productId) => {
+    return wishlist.some(
+      (item) => (item.product?._id || item.product || item._id).toString() === productId.toString()
+    );
+  };
+
+  const getCartItemQuantity = (productId) => {
+    if (!cart || cart.length === 0) return 0;
+    const match = cart.find(
+      (item) => (item.product?._id || item.product).toString() === productId.toString()
+    );
+    return match ? match.quantity : 0;
+  };
+
+  const handleWishlistToggle = async (e, prod) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await toggleWishlist(prod._id, prod);
+    tracker.trackWishlistAction(prod, 'toggle_wishlist');
+  };
+
+  const handleAddClick = async (e, prod) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let varietyData = {};
+    if (prod.varieties && prod.varieties.length > 0) {
+      const firstInStock = prod.varieties.find((v) => v.stock > 0) || prod.varieties[0];
+      varietyData = {
+        varietySku: firstInStock.sku || '',
+        varietyName: firstInStock.name || '',
+        varietyImage: firstInStock.image || prod.thumbnail || prod.images?.[0] || '',
+        price: firstInStock.price || prod.discountPrice || prod.price,
+        productTitle: prod.title,
+        category: prod.category
+      };
+    } else {
+      varietyData = {
+        price: prod.discountPrice || prod.price,
+        productTitle: prod.title,
+        category: prod.category
+      };
+    }
+    await addToCart(prod._id, 1, varietyData, prod);
+    tracker.trackCartAction(prod, varietyData.varietySku, 'add_to_cart');
+  };
+
+  const handleIncrement = async (e, prod, currentQty) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const maxStock = prod.stock || 99;
+    if (currentQty >= maxStock) {
+      showNotification(`Maximum available stock (${maxStock}) reached.`, 'info');
+      return;
+    }
+    await updateCartItem(prod._id, currentQty + 1);
+    tracker.trackCartAction(prod, '', 'increment_quantity');
+  };
+
+  const handleDecrement = async (e, prod, currentQty) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (currentQty <= 1) {
+      await removeFromCart(prod._id);
+    } else {
+      await updateCartItem(prod._id, currentQty - 1);
+    }
+    tracker.trackCartAction(prod, '', 'decrement_quantity');
+  };
 
   // Sync search input when URL changes
   useEffect(() => {
@@ -71,6 +146,7 @@ const Products = () => {
       if (minPriceParam) params.minPrice = minPriceParam;
       if (maxPriceParam) params.maxPrice = maxPriceParam;
       if (inStockParam) params.inStock = 'true';
+      if (minRatingParam) params.minRating = minRatingParam;
 
       const res = await apiGetProducts(params);
       if (res?.success) {
@@ -82,7 +158,7 @@ const Products = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, categoryParam, pageParam, sortParam, minPriceParam, maxPriceParam, inStockParam]);
+  }, [searchQuery, categoryParam, pageParam, sortParam, minPriceParam, maxPriceParam, inStockParam, minRatingParam]);
 
   useEffect(() => {
     loadProducts();
@@ -182,7 +258,7 @@ const Products = () => {
             <aside className="lg:col-span-1 bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-6">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h3 className="font-extrabold text-sm text-gray-900 uppercase tracking-wider">Filters</h3>
-                {(searchQuery || categoryParam !== 'All' || minPriceParam || maxPriceParam || inStockParam) && (
+                {(searchQuery || categoryParam !== 'All' || minPriceParam || maxPriceParam || inStockParam || minRatingParam) && (
                   <button
                     onClick={handleClearFilters}
                     className="text-xs text-saffron-600 hover:text-saffron-700 font-bold underline cursor-pointer"
@@ -280,6 +356,37 @@ const Products = () => {
                   <span>Exclude Out of Stock</span>
                 </label>
               </div>
+
+              {/* Customer Rating Filter */}
+              <div className="border-t border-gray-100 pt-4">
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2.5">
+                  Avg. Customer Rating
+                </h4>
+                <div className="space-y-1.5 text-xs">
+                  {[
+                    { label: '4★ & Above', value: '4' },
+                    { label: '3★ & Above', value: '3' },
+                    { label: 'All Ratings', value: '' }
+                  ].map((rate) => {
+                    const isSelected = minRatingParam === rate.value;
+                    return (
+                      <button
+                        key={rate.label}
+                        type="button"
+                        onClick={() => updateQueryParam({ minRating: rate.value })}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg transition font-medium flex items-center justify-between cursor-pointer ${
+                          isSelected
+                            ? 'bg-saffron-50 text-saffron-700 font-bold'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span>{rate.label}</span>
+                        {rate.value && <span className="text-amber-400 font-bold">★★★★</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </aside>
 
             {/* Right: Products Listing (3 Cols) */}
@@ -347,18 +454,17 @@ const Products = () => {
                     const varietiesCount = product.varieties?.length || 0;
                     const isOutOfStock = product.stock <= 0;
                     const isLowStock = product.stock > 0 && product.stock < 10;
+                    const cartQty = getCartItemQuantity(product._id);
 
                     return (
-                      <div
+                      <Link
                         key={product._id}
-                        className="bg-white rounded-2xl border border-gray-200 hover:border-saffron-300 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group"
+                        to={`/products/${product._id}`}
+                        onClick={() => tracker.trackProductClick(product, 'catalog_grid')}
+                        className="bg-white rounded-2xl border border-gray-200 hover:border-saffron-400 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group cursor-pointer"
                       >
-                        {/* Image Link */}
-                        <Link
-                          to={`/products/${product._id}`}
-                          onClick={() => tracker.trackProductClick(product, 'catalog_grid')}
-                          className="relative h-56 bg-saffron-50/40 overflow-hidden flex items-center justify-center p-4 border-b border-gray-100"
-                        >
+                        {/* Image Container */}
+                        <div className="relative h-56 bg-saffron-50/40 overflow-hidden flex items-center justify-center p-4 border-b border-gray-100">
                           {product.thumbnail ? (
                             <img
                               src={product.thumbnail}
@@ -376,13 +482,31 @@ const Products = () => {
                             </span>
                           )}
 
-                          {/* Varieties Count Badge */}
-                          {varietiesCount > 0 && (
-                            <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/95 backdrop-blur-xs text-gray-700 border border-gray-200 shadow-2xs">
-                              {varietiesCount} Options
-                            </span>
-                          )}
-                        </Link>
+                          {/* Wishlist Heart Icon */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleWishlistToggle(e, product)}
+                            title={isSavedInWishlist(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                            className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-xs ${
+                              isSavedInWishlist(product._id)
+                                ? 'bg-red-50 text-red-500 scale-105 hover:bg-red-100'
+                                : 'bg-white/90 backdrop-blur-xs text-gray-400 hover:text-red-500 hover:bg-white hover:scale-105'
+                            }`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              className="w-4 h-4 transition-transform active:scale-125"
+                              fill={isSavedInWishlist(product._id) ? 'currentColor' : 'none'}
+                              stroke="currentColor"
+                              strokeWidth={isSavedInWishlist(product._id) ? '0' : '2'}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                            </svg>
+                          </button>
+                        </div>
 
                         {/* Details */}
                         <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
@@ -392,19 +516,17 @@ const Products = () => {
                               {isOutOfStock ? (
                                 <span className="text-red-600 font-extrabold">Out of Stock</span>
                               ) : isLowStock ? (
-                                <span className="text-amber-600 font-extrabold">Only {product.stock} left</span>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white shadow-xs animate-pulse">
+                                  🔥 Only {product.stock} left!
+                                </span>
                               ) : (
                                 <span className="text-emerald-600">In Stock</span>
                               )}
                             </div>
 
-                            <Link
-                              to={`/products/${product._id}`}
-                              onClick={() => tracker.trackProductClick(product, 'catalog_grid')}
-                              className="block text-sm font-bold text-gray-900 group-hover:text-saffron-600 transition line-clamp-2 leading-snug"
-                            >
+                            <h3 className="text-sm font-bold text-gray-900 group-hover:text-saffron-600 transition line-clamp-2 leading-snug">
                               {product.title}
-                            </Link>
+                            </h3>
 
                             {/* Ratings Bar */}
                             <div className="flex items-center gap-1.5 mt-1.5">
@@ -422,8 +544,8 @@ const Products = () => {
                             </p>
                           </div>
 
-                          {/* Pricing & CTA */}
-                          <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                          {/* Pricing & Blinkit/Zepto-style CTA */}
+                          <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
                             <div>
                               <div className="flex items-baseline gap-1.5">
                                 <span className="text-lg font-black text-gray-900">
@@ -438,15 +560,79 @@ const Products = () => {
                               </span>
                             </div>
 
-                            <Link
-                              to={`/products/${product._id}`}
-                              className="px-3.5 py-2 bg-saffron-50 hover:bg-saffron-500 text-saffron-700 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer border border-saffron-200 hover:border-transparent"
-                            >
-                              View Options &rarr;
-                            </Link>
+                            {/* Blinkit / Zepto Action Button & Stepper */}
+                            <div className="flex flex-col items-end">
+                              {isOutOfStock ? (
+                                <span className="px-3 py-1.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-bold border border-gray-200">
+                                  Sold Out
+                                </span>
+                              ) : cartQty > 0 ? (
+                                /* Quantity Stepper (1, +, -) */
+                                <div
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  className="h-8 bg-saffron-500 text-white rounded-xl font-black text-xs flex items-center shadow-xs overflow-hidden border border-saffron-600"
+                                >
+                                  {/* Decrement Button */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDecrement(e, product, cartQty)}
+                                    title="Decrease quantity"
+                                    className="w-7 h-full flex items-center justify-center hover:bg-saffron-600 active:scale-90 transition font-black text-sm cursor-pointer select-none"
+                                  >
+                                    −
+                                  </button>
+
+                                  {/* Quantity Display (Clicking again also increments) */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleIncrement(e, product, cartQty)}
+                                    title="Click to add more"
+                                    className="px-2 h-full flex items-center justify-center font-black text-xs hover:bg-saffron-600/60 active:scale-95 transition cursor-pointer select-none min-w-[24px]"
+                                  >
+                                    {cartQty}
+                                  </button>
+
+                                  {/* Increment Button */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleIncrement(e, product, cartQty)}
+                                    title="Increase quantity"
+                                    className="w-7 h-full flex items-center justify-center hover:bg-saffron-600 active:scale-90 transition font-black text-sm cursor-pointer select-none"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
+                                /* ADD + Button */
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleAddClick(e, product)}
+                                  className="px-4 py-1.5 bg-saffron-50 hover:bg-saffron-500 text-saffron-700 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider border border-saffron-300 hover:border-transparent transition-all duration-200 flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
+                                >
+                                  <span>ADD</span>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    className="w-3.5 h-3.5 stroke-[3]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                  </svg>
+                                </button>
+                              )}
+                              {varietiesCount > 0 && !isOutOfStock && cartQty === 0 && (
+                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                                  {varietiesCount} options
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
