@@ -239,12 +239,12 @@ const TrainerCourseDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex flex-col justify-between font-nunito">
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito">
         <Navbar />
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="text-center space-y-3">
             <div className="w-10 h-10 border-4 border-saffron-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Loading Course Studio...</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-stone-400 uppercase tracking-wider">Loading Course Studio...</p>
           </div>
         </div>
         <Footer />
@@ -268,7 +268,7 @@ const TrainerCourseDetail = () => {
   ).sort((a, b) => new Date(b.scheduledAt || b.createdAt || 0) - new Date(a.scheduledAt || a.createdAt || 0));
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col justify-between font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
       <div>
         <Navbar />
 
@@ -285,7 +285,7 @@ const TrainerCourseDetail = () => {
             <div className="flex items-center gap-2">
               <Link
                 to={`/courses/${courseId}`}
-                className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 hover:bg-gray-50 dark:hover:bg-stone-800 text-gray-700 dark:text-stone-200 text-xs font-bold transition flex items-center gap-1 shadow-2xs"
               >
                 <span>👁️ View Public Course Page</span>
               </Link>
@@ -301,13 +301,13 @@ const TrainerCourseDetail = () => {
           </div>
 
           {/* Course Hero Banner */}
-          <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/90 dark:border-stone-800 text-stone-900 dark:text-stone-100 shadow-sm dark:shadow-xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 transition">
             <div className="space-y-2 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-saffron-500 text-white">
                   {course.category}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-gray-200">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
                   {course.level}
                 </span>
                 {liveOngoingClass && (
@@ -316,27 +316,27 @@ const TrainerCourseDetail = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{course.title}</h1>
-              <p className="text-xs sm:text-sm text-stone-300 line-clamp-2 leading-relaxed">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 dark:text-stone-100">{course.title}</h1>
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
                 {course.description}
               </p>
-              <div className="flex items-center gap-4 text-xs text-stone-400 pt-1">
-                <span>Trainer: <strong className="text-white">{trainerInfo?.name || course.trainer?.name || 'You'}</strong></span>
+              <div className="flex items-center gap-4 text-xs text-stone-500 dark:text-stone-400 pt-1">
+                <span>Trainer: <strong className="text-stone-800 dark:text-stone-200">{trainerInfo?.name || course.trainer?.name || 'You'}</strong></span>
                 <span>•</span>
-                <span>Enrolled: <strong className="text-white">{course.enrolledCount || 0} Yogis</strong></span>
+                <span>Enrolled: <strong className="text-stone-800 dark:text-stone-200">{course.enrolledCount || 0} Yogis</strong></span>
                 <span>•</span>
-                <span>Total Classes: <strong className="text-white">{classes.length}</strong></span>
+                <span>Total Classes: <strong className="text-stone-800 dark:text-stone-200">{classes.length}</strong></span>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center min-w-[130px]">
-                <span className="text-[10px] uppercase font-bold text-saffron-300 block">Upcoming</span>
-                <span className="text-2xl font-black text-white">{upcomingClasses.length}</span>
+              <div className="bg-amber-50/70 dark:bg-stone-800/80 rounded-2xl p-4 border border-amber-200/80 dark:border-stone-700 text-center min-w-[130px] shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-saffron-300 block">Upcoming</span>
+                <span className="text-2xl font-black text-stone-900 dark:text-white">{upcomingClasses.length}</span>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center min-w-[130px]">
-                <span className="text-[10px] uppercase font-bold text-emerald-300 block">Recorded</span>
-                <span className="text-2xl font-black text-white">{recordedClasses.length}</span>
+              <div className="bg-emerald-50/70 dark:bg-stone-800/80 rounded-2xl p-4 border border-emerald-200/80 dark:border-stone-700 text-center min-w-[130px] shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 block">Recorded</span>
+                <span className="text-2xl font-black text-stone-900 dark:text-white">{recordedClasses.length}</span>
               </div>
             </div>
           </div>
@@ -427,7 +427,7 @@ const TrainerCourseDetail = () => {
 
           {/* Filter Pills */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-stone-200">
+            <div className="flex items-center gap-2 bg-white dark:bg-stone-900 p-1.5 rounded-2xl border border-stone-200 dark:border-stone-800">
               {[
                 { id: 'all', label: 'All Classes', count: classes.length },
                 { id: 'upcoming', label: 'Upcoming Scheduled', count: upcomingClasses.length },
@@ -440,11 +440,11 @@ const TrainerCourseDetail = () => {
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     activeTab === tab.id
                       ? 'bg-saffron-500 text-white shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-700'}`}>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'}`}>
                     {tab.count}
                   </span>
                 </button>
@@ -462,10 +462,10 @@ const TrainerCourseDetail = () => {
 
           {/* Classes Content */}
           {classes.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-stone-200 space-y-4">
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-12 text-center border border-dashed border-stone-200 dark:border-stone-800 space-y-4">
               <span className="text-5xl block">🧘</span>
-              <h3 className="text-base font-bold text-stone-800">No classes in this course yet</h3>
-              <p className="text-xs text-stone-500 max-w-md mx-auto">
+              <h3 className="text-base font-bold text-stone-800 dark:text-stone-200">No classes in this course yet</h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400 max-w-md mx-auto">
                 Schedule your first live yoga masterclass or upload pre-recorded practice sessions with YouTube embedding.
               </p>
               <button
@@ -484,7 +484,7 @@ const TrainerCourseDetail = () => {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-saffron-500"></span>
-                    <h2 className="text-base font-black text-stone-900 tracking-tight">
+                    <h2 className="text-base font-black text-stone-900 dark:text-stone-100 tracking-tight">
                       📅 Upcoming Scheduled Classes ({upcomingClasses.length})
                     </h2>
                   </div>
@@ -493,32 +493,32 @@ const TrainerCourseDetail = () => {
                     {upcomingClasses.map((cls, idx) => (
                       <div
                         key={cls._id || idx}
-                        className="bg-white rounded-3xl p-5 border border-saffron-100 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-4"
+                        className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-saffron-100 dark:border-stone-800 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-4"
                       >
                         <div className="space-y-2">
                           {/* Course Name Prominently Featured */}
-                          <div className="text-[11px] font-black text-saffron-700 bg-saffron-50 px-2.5 py-1 rounded-xl border border-saffron-200/60 inline-flex items-center gap-1.5">
+                          <div className="text-[11px] font-black text-saffron-700 dark:text-saffron-300 bg-saffron-50 dark:bg-stone-800 px-2.5 py-1 rounded-xl border border-saffron-200/60 dark:border-stone-700 inline-flex items-center gap-1.5">
                             <span>📚 Course:</span>
                             <span className="truncate max-w-[220px]">{course.title}</span>
                           </div>
 
                           <div className="flex items-center justify-between pt-1">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                               {cls.type}
                             </span>
-                            <span className="text-xs font-bold text-stone-500">
+                            <span className="text-xs font-bold text-stone-500 dark:text-stone-400">
                               ⏱️ {cls.duration}
                             </span>
                           </div>
 
-                          <h3 className="text-sm font-bold text-stone-900 leading-snug">{cls.title}</h3>
-                          <p className="text-xs text-stone-500 line-clamp-2">{cls.description}</p>
+                          <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">{cls.title}</h3>
+                          <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">{cls.description}</p>
                         </div>
 
-                        <div className="pt-3 border-t border-stone-100 space-y-3">
+                        <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-3">
                           <div className="text-xs">
                             <span className="text-[10px] uppercase font-bold text-stone-400 block">Scheduled Time</span>
-                            <span className="font-extrabold text-stone-800 text-xs">
+                            <span className="font-extrabold text-stone-800 dark:text-stone-200 text-xs">
                               {formatDate(cls.scheduledAt)}
                             </span>
                           </div>
@@ -534,7 +534,7 @@ const TrainerCourseDetail = () => {
                             <button
                               type="button"
                               onClick={() => setActivePreviewClass(cls)}
-                              className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition"
+                              className="px-3 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl text-xs font-bold transition"
                               title="Preview in Studio"
                             >
                               ▶ Preview
@@ -542,7 +542,7 @@ const TrainerCourseDetail = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenEditModal(cls)}
-                              className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition text-xs"
+                              className="p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition text-xs"
                               title="Edit Class"
                             >
                               ✏️
@@ -550,7 +550,7 @@ const TrainerCourseDetail = () => {
                             <button
                               type="button"
                               onClick={() => handleDeleteClass(cls)}
-                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition text-xs"
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition text-xs"
                               title="Delete Class"
                             >
                               🗑️
@@ -568,14 +568,14 @@ const TrainerCourseDetail = () => {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <h2 className="text-base font-black text-stone-900 tracking-tight">
+                    <h2 className="text-base font-black text-stone-900 dark:text-stone-100 tracking-tight">
                       📼 Recorded & Previous Classes ({recordedClasses.length})
                     </h2>
                   </div>
 
                   {recordedClasses.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-6 text-center border border-dashed border-stone-200">
-                      <p className="text-xs text-stone-500">
+                    <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 text-center border border-dashed border-stone-200 dark:border-stone-800">
+                      <p className="text-xs text-stone-500 dark:text-stone-400">
                         No recorded or completed classes available yet. Live sessions automatically transition here once ended.
                       </p>
                     </div>
@@ -584,32 +584,32 @@ const TrainerCourseDetail = () => {
                       {recordedClasses.map((cls, idx) => (
                         <div
                           key={cls._id || idx}
-                          className="bg-white rounded-3xl p-5 border border-stone-200 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-4"
+                          className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-4"
                         >
                           <div className="space-y-2">
                             {/* Course Name Prominently Featured */}
-                            <div className="text-[11px] font-black text-stone-700 bg-stone-100 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5">
+                            <div className="text-[11px] font-black text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5">
                               <span>📚 Course:</span>
                               <span className="truncate max-w-[220px]">{course.title}</span>
                             </div>
 
                             <div className="flex items-center justify-between pt-1">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
                                 ✓ Recorded Session
                               </span>
-                              <span className="text-xs font-bold text-stone-500">
+                              <span className="text-xs font-bold text-stone-500 dark:text-stone-400">
                                 ⏱️ {cls.duration}
                               </span>
                             </div>
 
-                            <h3 className="text-sm font-bold text-stone-900 leading-snug">{cls.title}</h3>
-                            <p className="text-xs text-stone-500 line-clamp-2">{cls.description}</p>
+                            <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">{cls.title}</h3>
+                            <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">{cls.description}</p>
                           </div>
 
-                          <div className="pt-3 border-t border-stone-100 space-y-3">
+                          <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-3">
                             <div className="text-xs">
                               <span className="text-[10px] uppercase font-bold text-stone-400 block">Conducted / Recorded Date</span>
-                              <span className="font-bold text-stone-700 text-xs">
+                              <span className="font-bold text-stone-700 dark:text-stone-300 text-xs">
                                 📅 {formatDate(cls.scheduledAt || cls.endedAt || cls.createdAt)}
                               </span>
                             </div>
@@ -625,7 +625,7 @@ const TrainerCourseDetail = () => {
                               <button
                                 type="button"
                                 onClick={() => handleOpenEditModal(cls)}
-                                className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition text-xs"
+                                className="p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition text-xs"
                                 title="Edit Class Details"
                               >
                                 ✏️
@@ -633,7 +633,7 @@ const TrainerCourseDetail = () => {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteClass(cls)}
-                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition text-xs"
+                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition text-xs"
                                 title="Delete Class"
                               >
                                 🗑️
@@ -658,28 +658,28 @@ const TrainerCourseDetail = () => {
       {/* ============================================================== */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-stone-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-stone-100 flex items-center justify-between bg-stone-900 text-white">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-lg w-full shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between bg-stone-50 dark:bg-stone-800/80 text-stone-900 dark:text-stone-100">
               <div>
                 <h3 className="text-base font-black">
                   {editingClassId ? 'Edit Class Details' : 'Add New Class to Course'}
                 </h3>
-                <p className="text-xs text-stone-400 mt-0.5">
+                <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                   Course: {course.title}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center text-xs transition"
+                className="w-8 h-8 rounded-full bg-stone-200/80 hover:bg-stone-300 dark:bg-stone-700 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white flex items-center justify-center text-xs transition"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveClass} className="p-6 space-y-4">
+            <form onSubmit={handleSaveClass} className="p-6 space-y-4 bg-white dark:bg-stone-900">
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                   Class Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -688,12 +688,12 @@ const TrainerCourseDetail = () => {
                   placeholder="e.g., Morning Surya Namaskār Alignment"
                   value={classFormData.title}
                   onChange={(e) => setClassFormData({ ...classFormData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold focus:outline-none focus:border-saffron-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-xs font-semibold focus:outline-none focus:border-saffron-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                   Class Description
                 </label>
                 <textarea
@@ -701,13 +701,13 @@ const TrainerCourseDetail = () => {
                   placeholder="Key postures covered, breath guidance, pranayama instructions..."
                   value={classFormData.description}
                   onChange={(e) => setClassFormData({ ...classFormData, description: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-saffron-500"
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-xs focus:outline-none focus:border-saffron-500"
                 ></textarea>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                     Duration (Minutes)
                   </label>
                   <input
@@ -716,18 +716,18 @@ const TrainerCourseDetail = () => {
                     max="180"
                     value={classFormData.duration}
                     onChange={(e) => setClassFormData({ ...classFormData, duration: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold focus:outline-none focus:border-saffron-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs font-semibold focus:outline-none focus:border-saffron-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                     Class Format
                   </label>
                   <select
                     value={classFormData.type}
                     onChange={(e) => setClassFormData({ ...classFormData, type: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold focus:outline-none focus:border-saffron-500 bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs font-semibold focus:outline-none focus:border-saffron-500"
                   >
                     <option value="Live Stream">Live Stream</option>
                     <option value="Recorded">Recorded Session</option>
@@ -736,7 +736,7 @@ const TrainerCourseDetail = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                   Scheduled Date & Time <span className="text-red-500">*</span>
                   <span className="text-[10px] text-stone-400 font-normal ml-1">
                     (Past dates strictly blocked)
@@ -748,12 +748,12 @@ const TrainerCourseDetail = () => {
                   min={minDateTime}
                   value={classFormData.scheduledAt}
                   onChange={(e) => setClassFormData({ ...classFormData, scheduledAt: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold focus:outline-none focus:border-saffron-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs font-semibold focus:outline-none focus:border-saffron-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
                   YouTube Live / Video Link
                 </label>
                 <input
@@ -761,18 +761,18 @@ const TrainerCourseDetail = () => {
                   placeholder="https://www.youtube.com/watch?v=... or YouTube Live URL"
                   value={classFormData.videoUrl}
                   onChange={(e) => setClassFormData({ ...classFormData, videoUrl: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-saffron-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-xs focus:outline-none focus:border-saffron-500"
                 />
                 <p className="text-[10px] text-stone-400 mt-1">
                   Supports YouTube standard URLs, live stream URLs, youtu.be shortlinks, or Google Meet links.
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition"
+                  className="px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold transition"
                 >
                   Cancel
                 </button>

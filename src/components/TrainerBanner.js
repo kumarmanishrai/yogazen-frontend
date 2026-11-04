@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 const TrainerBanner = ({ variant = 'full' }) => {
   if (variant === 'sidebar') {
     return (
-      <div className="bg-gradient-to-br from-saffron-50 via-white to-saffron-100/50 p-6 rounded-3xl border border-saffron-200/70 shadow-sm space-y-4">
+      <div className="bg-gradient-to-br from-saffron-50 via-white to-saffron-100/50 dark:from-stone-900 dark:via-stone-900 dark:to-stone-950 p-6 rounded-3xl border border-saffron-200/70 dark:border-stone-800 shadow-sm space-y-4">
         <span className="text-2xl">🧘‍♀️</span>
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest text-saffron-700 bg-saffron-100/80 px-2.5 py-1 rounded-full">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-saffron-700 dark:text-saffron-300 bg-saffron-100/80 dark:bg-stone-800 px-2.5 py-1 rounded-full">
             Instructor Portal
           </span>
-          <h4 className="text-base font-bold text-gray-900 mt-2">Train on YogaZen</h4>
-          <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+          <h4 className="text-base font-bold text-gray-900 dark:text-stone-100 mt-2">Train on YogaZen</h4>
+          <p className="text-xs text-gray-600 dark:text-stone-400 mt-1 leading-relaxed">
             Reach conscious students worldwide. Publish your courses, schedule live classes, and manage payouts.
           </p>
         </div>

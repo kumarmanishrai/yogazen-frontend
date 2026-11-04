@@ -501,7 +501,7 @@ const ProductDetail = () => {
                 <div className="pt-2 text-[10px] text-gray-400 space-y-1.5 border-t border-gray-100 text-center">
                   <p>🔒 Secure 256-Bit Encrypted Payment</p>
                   <p>📦 Shipped in Eco-Friendly Biodegradable Box</p>
-                  <p>✨ 7-Day Hassle-Free Returns</p>
+                  <p>✓ 7-Day Hassle-Free Returns</p>
                 </div>
               </div>
             </div>

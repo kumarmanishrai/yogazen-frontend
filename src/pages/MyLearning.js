@@ -113,9 +113,10 @@ const MyLearning = () => {
     const progressPercentage = Math.min(100, Math.round((updatedCompleted.length / totalClasses) * 100));
 
     try {
-      const orderId = selectedEnrollment?.orderId || selectedEnrollment?._id;
+      const orderId = selectedEnrollment?.orderId || selectedEnrollment?._id || courseId;
       if (orderId) {
         await apiUpdateCourseProgress(orderId, {
+          courseId,
           completedClasses: updatedCompleted,
           progressPercentage
         });
@@ -232,6 +233,33 @@ const MyLearning = () => {
               {/* Video Embed */}
               <div className="relative w-full aspect-video bg-black flex items-center justify-center">
                 {(() => {
+                  const isFutureScheduled =
+                    activePlayingClass.scheduledAt &&
+                    new Date(activePlayingClass.scheduledAt) > new Date() &&
+                    !activePlayingClass.isLive;
+
+                  if (isFutureScheduled) {
+                    return (
+                      <div className="p-8 text-center space-y-3 max-w-md mx-auto">
+                        <span className="text-4xl block">🗓️</span>
+                        <h4 className="text-sm font-bold text-white">{activePlayingClass.title}</h4>
+                        <span className="inline-block px-3 py-1 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-semibold rounded-full">
+                          Upcoming Scheduled Class
+                        </span>
+                        <p className="text-stone-300 text-xs leading-relaxed">
+                          This class is scheduled for{' '}
+                          <strong>
+                            {new Date(activePlayingClass.scheduledAt).toLocaleString('en-IN', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short'
+                            })}
+                          </strong>
+                          . The video and live session will unlock at the scheduled class time.
+                        </p>
+                      </div>
+                    );
+                  }
+
                   const ytId =
                     activePlayingClass.youtubeVideoId ||
                     extractYouTubeId(activePlayingClass.videoUrl || activePlayingClass.meetingUrl || activePlayingClass.recordingUrl);

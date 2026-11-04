@@ -7,12 +7,25 @@ import { useAuth } from '../context/AuthContext';
 
 const CourseDetail = () => {
   const { id } = useParams();
-  const { isLoggedIn, openAuthModal } = useAuth();
+  const { isLoggedIn, openAuthModal, currentUser, role } = useAuth();
 
   // Course State
   const [course, setCourse] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check if current logged-in user is the course instructor
+  const isTrainerOwner = Boolean(
+    currentUser && (
+      (role === 'trainer' && (
+        (course?.trainer?._id && currentUser._id && course.trainer._id.toString() === currentUser._id.toString()) ||
+        (course?.trainer && currentUser._id && course.trainer.toString() === currentUser._id.toString()) ||
+        (course?.trainer?.email && currentUser.email && course.trainer.email.toLowerCase() === currentUser.email.toLowerCase())
+      )) ||
+      (course?.trainer?._id && currentUser._id && course.trainer._id.toString() === currentUser._id.toString()) ||
+      (course?.trainer?.email && currentUser.email && course.trainer.email.toLowerCase() === currentUser.email.toLowerCase())
+    )
+  );
   const [error, setError] = useState(null);
 
   // Review Form State
@@ -228,12 +241,12 @@ const CourseDetail = () => {
   const finalPrice = Math.max(0, (course.price || 0) - appliedDiscount);
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-nunito transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 pb-20">
         {/* Breadcrumb Header */}
-        <div className="bg-white border-b border-stone-200 py-3">
+        <div className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 py-3">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs text-stone-500 flex items-center gap-2 overflow-x-auto whitespace-nowrap">
             <Link to="/" className="hover:text-saffron-600 font-semibold">Home</Link>
             <span>/</span>
@@ -312,15 +325,22 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                {/* Enrolled Status Pill */}
-                {isEnrolled && (
+                {/* Enrolled Status / Instructor Pill */}
+                {isTrainerOwner ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold mt-2">
+                    <span>👨‍🏫 You are the Instructor of this Course</span>
+                    <Link to={`/trainer/courses/${id}`} className="underline hover:text-white ml-2">
+                      Manage in Trainer Studio →
+                    </Link>
+                  </div>
+                ) : isEnrolled ? (
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold mt-2">
                     <span>✅ You are enrolled in this course</span>
-                    <Link to="/profile" className="underline hover:text-white ml-2">
+                    <Link to="/my-courses" className="underline hover:text-white ml-2">
                       Open Practice Studio →
                     </Link>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Right Hero Preview Thumbnail (4 cols) */}
@@ -430,15 +450,21 @@ const CourseDetail = () => {
                                 {cls.description || 'Practice guidance and sequential alignment steps.'}
                               </p>
                               {isEnrolled ? (
-                                <Link
-                                  to={`/my-learning?courseId=${id}`}
-                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-saffron-600 hover:underline pt-1"
-                                >
-                                  ▶ Watch / Stream in Live Practice Studio
-                                </Link>
+                                cls.scheduledAt && new Date(cls.scheduledAt) > new Date() && !cls.isLive ? (
+                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                                    🗓️ Scheduled Class: {new Date(cls.scheduledAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                  </span>
+                                ) : (
+                                  <Link
+                                    to={`/my-learning?courseId=${id}`}
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-saffron-600 hover:underline pt-1"
+                                  >
+                                    ▶ Watch / Stream in Live Practice Studio
+                                  </Link>
+                                )
                               ) : (
                                 <span className="text-[11px] text-stone-400 italic">
-                                  🔒 Enroll to unlock this full lesson video
+                                  🔒 Enroll to unlock this lesson
                                 </span>
                               )}
                             </div>
@@ -732,9 +758,18 @@ const CourseDetail = () => {
                 </div>
 
                 {/* Primary CTA Button */}
-                {isEnrolled ? (
+                {isTrainerOwner ? (
                   <Link
-                    to="/profile"
+                    to={`/trainer/courses/${id}`}
+                    className="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-xs font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>👨‍🏫 You are the Instructor</span>
+                    <span>•</span>
+                    <span>Manage in Studio →</span>
+                  </Link>
+                ) : isEnrolled ? (
+                  <Link
+                    to="/my-courses"
                     className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>✓ Already Enrolled</span>
@@ -820,7 +855,7 @@ const CourseDetail = () => {
                 </p>
                 <div className="pt-2">
                   <Link
-                    to="/profile"
+                    to="/my-courses"
                     className="inline-block px-6 py-3 bg-saffron-500 hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-xs"
                   >
                     Go to My Practice Studio →

@@ -134,7 +134,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-between font-nunito">
+    <div className="min-h-screen bg-white dark:bg-stone-950 text-gray-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
       <div>
         <Navbar />
 
@@ -142,12 +142,12 @@ const Home = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="text-center max-w-3xl mx-auto">
             {/* Gentle Badge */}
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-saffron-50 text-saffron-700 border border-saffron-200 mb-6">
-              <span>✨</span> Curated Wellness for Mind, Body & Soul
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-saffron-50 dark:bg-stone-900 text-saffron-700 dark:text-saffron-400 border border-saffron-200 dark:border-stone-800 mb-6">
+              Curated Wellness for Mind, Body & Soul
             </span>
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-stone-100 tracking-tight leading-tight">
               Embrace Tranquility with{' '}
               <span className="text-saffron-600 underline decoration-saffron-200 decoration-wavy">
                 YogaZen
@@ -155,20 +155,20 @@ const Home = () => {
             </h1>
 
             {/* Subheading */}
-            <p className="mt-5 text-base sm:text-lg text-gray-600 leading-relaxed">
+            <p className="mt-5 text-base sm:text-lg text-gray-600 dark:text-stone-400 leading-relaxed">
               Discover ethically-crafted yoga mats, Tibetan singing bowls, sacred malas,
               meditation chairs, and pure aromatherapy — crafted to elevate your daily practice.
             </p>
 
             {/* Hero Interactive Search Bar */}
-            <form onSubmit={handleHeroSearch} className="mt-8 max-w-lg mx-auto relative flex items-center shadow-lg rounded-2xl overflow-hidden border border-gray-200 bg-white">
+            <form onSubmit={handleHeroSearch} className="mt-8 max-w-lg mx-auto relative flex items-center shadow-lg rounded-2xl overflow-hidden border border-gray-200 dark:border-stone-800 bg-white dark:bg-stone-900">
               <span className="pl-4 text-gray-400 text-lg">🔍</span>
               <input
                 type="text"
                 placeholder="Search yoga mats, singing bowls, malas, props..."
                 value={heroSearch}
                 onChange={(e) => setHeroSearch(e.target.value)}
-                className="w-full py-3.5 px-3 text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+                className="w-full py-3.5 px-3 text-xs sm:text-sm text-gray-800 dark:text-stone-100 placeholder-gray-400 dark:placeholder-stone-500 bg-transparent focus:outline-none"
               />
               <button
                 type="submit"
@@ -199,14 +199,14 @@ const Home = () => {
           <section className="mt-16 sm:mt-24">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-stone-100 tracking-tight">
                   Shop by Mindful Category
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-stone-400 mt-0.5">
                   Handcrafted tools dedicated to grounding, breathwork, and meditation
                 </p>
               </div>
-              <Link to="/products" className="text-xs font-bold text-saffron-600 hover:underline">
+              <Link to="/products" className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline">
                 View All &rarr;
               </Link>
             </div>
@@ -217,15 +217,15 @@ const Home = () => {
                   key={cat.name}
                   to={`/products?category=${encodeURIComponent(cat.name)}`}
                   onClick={() => tracker.trackCategoryBrowse(cat.name)}
-                  className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-saffron-300 shadow-2xs hover:shadow-md transition text-center flex flex-col items-center justify-between group"
+                  className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 hover:border-saffron-300 dark:hover:border-saffron-500 shadow-2xs hover:shadow-md transition text-center flex flex-col items-center justify-between group"
                 >
                   <span className="text-4xl group-hover:scale-110 transition-transform duration-300 mb-2">
                     {cat.icon}
                   </span>
-                  <h3 className="text-xs font-bold text-gray-900 group-hover:text-saffron-600 transition">
+                  <h3 className="text-xs font-bold text-gray-900 dark:text-stone-100 group-hover:text-saffron-600 dark:group-hover:text-saffron-400 transition">
                     {cat.label}
                   </h3>
-                  <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">
+                  <p className="text-[10px] text-gray-400 dark:text-stone-500 mt-1 line-clamp-1">
                     {cat.desc}
                   </p>
                 </Link>
@@ -238,14 +238,14 @@ const Home = () => {
             <section className="mt-16 sm:mt-24">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-stone-100 tracking-tight">
                     Trending Mindful Essentials
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-stone-400 mt-0.5">
                     Our community's most beloved sacred wellness instruments
                   </p>
                 </div>
-                <Link to="/products?sort=popular" className="text-xs font-bold text-saffron-600 hover:underline">
+                <Link to="/products?sort=popular" className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline">
                   Browse Popular &rarr;
                 </Link>
               </div>
@@ -264,10 +264,10 @@ const Home = () => {
                       key={p._id}
                       to={`/products/${p._id}`}
                       onClick={() => tracker.trackProductClick(p, 'home_trending')}
-                      className="bg-white rounded-2xl border border-gray-200 hover:border-saffron-400 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group p-4 cursor-pointer"
+                      className="bg-white dark:bg-stone-900 rounded-2xl border border-gray-200 dark:border-stone-800 hover:border-saffron-400 dark:hover:border-saffron-500 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group p-4 cursor-pointer"
                     >
                       {/* Image Area */}
-                      <div className="h-48 bg-saffron-50/40 rounded-xl overflow-hidden flex items-center justify-center p-3 relative">
+                      <div className="h-48 bg-saffron-50/40 dark:bg-stone-950/60 rounded-xl overflow-hidden flex items-center justify-center p-3 relative">
                         {p.thumbnail ? (
                           <img
                             src={p.thumbnail}
@@ -314,34 +314,34 @@ const Home = () => {
                       {/* Content Area */}
                       <div className="mt-3 space-y-1 flex-1 flex flex-col justify-between">
                         <div>
-                          <span className="text-[10px] uppercase font-bold text-saffron-600">
+                          <span className="text-[10px] uppercase font-bold text-saffron-600 dark:text-saffron-400">
                             {p.category}
                           </span>
-                          <h3 className="text-xs font-bold text-gray-900 group-hover:text-saffron-600 transition line-clamp-2 leading-snug">
+                          <h3 className="text-xs font-bold text-gray-900 dark:text-stone-100 group-hover:text-saffron-600 dark:group-hover:text-saffron-400 transition line-clamp-2 leading-snug">
                             {p.title}
                           </h3>
 
-                          <div className="flex items-center gap-1 text-[11px] text-gray-500 pt-1">
+                          <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-stone-400 pt-1">
                             <span className="text-amber-400">★</span>
-                            <span className="font-bold text-gray-800">{p.rating ? p.rating.toFixed(1) : '5.0'}</span>
+                            <span className="font-bold text-gray-800 dark:text-stone-200">{p.rating ? p.rating.toFixed(1) : '5.0'}</span>
                             <span>({p.reviewsCount || 0})</span>
                           </div>
                         </div>
 
                         {/* Pricing & Blinkit/Zepto CTA */}
-                        <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 mt-2">
+                        <div className="pt-2 border-t border-gray-100 dark:border-stone-800 flex items-center justify-between gap-2 mt-2">
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-base font-black text-gray-900">
+                            <span className="text-base font-black text-gray-900 dark:text-stone-100">
                               ₹{price.toLocaleString()}
                             </span>
                             {originalPrice > price && (
-                              <del className="text-xs text-gray-400">₹{originalPrice.toLocaleString()}</del>
+                              <del className="text-xs text-gray-400 dark:text-stone-500">₹{originalPrice.toLocaleString()}</del>
                             )}
                           </div>
 
                           <div className="flex flex-col items-end">
                             {p.stock <= 0 ? (
-                              <span className="px-2.5 py-1 bg-gray-100 text-gray-400 rounded-lg text-[10px] font-bold border border-gray-200">
+                              <span className="px-2.5 py-1 bg-gray-100 dark:bg-stone-800 text-gray-400 dark:text-stone-500 rounded-lg text-[10px] font-bold border border-gray-200 dark:border-stone-700">
                                 Sold Out
                               </span>
                             ) : cartQty > 0 ? (
@@ -388,7 +388,7 @@ const Home = () => {
                               <button
                                 type="button"
                                 onClick={(e) => handleAddClick(e, p)}
-                                className="px-3.5 py-1.5 bg-saffron-50 hover:bg-saffron-500 text-saffron-700 hover:text-white rounded-lg text-xs font-black uppercase tracking-wider border border-saffron-300 hover:border-transparent transition-all duration-200 flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
+                                className="px-3.5 py-1.5 bg-saffron-50 dark:bg-stone-800 hover:bg-saffron-500 dark:hover:bg-saffron-500 text-saffron-700 dark:text-saffron-300 hover:text-white rounded-lg text-xs font-black uppercase tracking-wider border border-saffron-300 dark:border-stone-700 hover:border-transparent transition-all duration-200 flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
                               >
                                 <span>ADD</span>
                                 <svg
@@ -419,7 +419,7 @@ const Home = () => {
 
           {/* ML Recommendations Showcase (Powered by ML Recommendation System) */}
           {recommendedProducts.length > 0 && (
-            <section className="mt-16 sm:mt-24 bg-gradient-to-br from-amber-50/50 via-white to-saffron-50/40 p-6 sm:p-10 rounded-3xl border border-saffron-100/80 shadow-xs">
+            <section className="mt-16 sm:mt-24 bg-gradient-to-br from-amber-50/50 via-white to-saffron-50/40 dark:from-stone-900/90 dark:via-stone-900 dark:to-stone-950 p-6 sm:p-10 rounded-3xl border border-saffron-100/80 dark:border-stone-800 shadow-xs dark:shadow-xl transition">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
@@ -427,16 +427,16 @@ const Home = () => {
                       ML Recommended For You
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-stone-100 tracking-tight">
                     Personalized Wellness Selections
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-stone-400 mt-0.5">
                     Tailored by YogaZen's ML recommendation model based on your unique browsing affinities
                   </p>
                 </div>
                 <Link
                   to="/products"
-                  className="text-xs font-bold text-saffron-600 hover:text-saffron-700 hover:underline self-start md:self-auto flex items-center gap-1"
+                  className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:text-saffron-700 dark:hover:text-saffron-300 hover:underline self-start md:self-auto flex items-center gap-1"
                 >
                   Explore All Products &rarr;
                 </Link>
@@ -453,10 +453,10 @@ const Home = () => {
                       key={p._id}
                       to={`/products/${p._id}`}
                       onClick={() => tracker.trackProductClick(p, 'home_ml_recommendation')}
-                      className="bg-white rounded-2xl border border-gray-200 hover:border-saffron-400 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group p-4 cursor-pointer relative"
+                      className="bg-white dark:bg-stone-900 rounded-2xl border border-gray-200 dark:border-stone-800 hover:border-saffron-400 dark:hover:border-saffron-500 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group p-4 cursor-pointer relative"
                     >
                       {/* Image Area */}
-                      <div className="h-44 bg-saffron-50/40 rounded-xl overflow-hidden flex items-center justify-center p-3 relative">
+                      <div className="h-44 bg-saffron-50/40 dark:bg-stone-950/60 rounded-xl overflow-hidden flex items-center justify-center p-3 relative">
                         {p.thumbnail ? (
                           <img
                             src={p.thumbnail}
@@ -480,7 +480,7 @@ const Home = () => {
                           className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-xs ${
                             isSavedInWishlist(p._id)
                               ? 'bg-red-50 text-red-500 scale-105 hover:bg-red-100'
-                              : 'bg-white/90 backdrop-blur-xs text-gray-400 hover:text-red-500 hover:bg-white hover:scale-105'
+                              : 'bg-white/90 dark:bg-stone-850/90 backdrop-blur-xs text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-stone-800 hover:scale-105'
                           }`}
                         >
                           <svg
@@ -502,39 +502,39 @@ const Home = () => {
                       <div className="mt-3 space-y-1.5 flex-1 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between gap-1">
-                            <span className="text-[10px] uppercase font-bold text-saffron-600">
+                            <span className="text-[10px] uppercase font-bold text-saffron-600 dark:text-saffron-400">
                               {p.category}
                             </span>
-                            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                            <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-stone-400">
                               <span className="text-amber-400">★</span>
-                              <span className="font-bold text-gray-800">{p.rating ? p.rating.toFixed(1) : '4.9'}</span>
+                              <span className="font-bold text-gray-800 dark:text-stone-200">{p.rating ? p.rating.toFixed(1) : '4.9'}</span>
                             </div>
                           </div>
 
-                          <h3 className="text-xs font-bold text-gray-900 group-hover:text-saffron-600 transition line-clamp-1 leading-snug">
+                          <h3 className="text-xs font-bold text-gray-900 dark:text-stone-100 group-hover:text-saffron-600 dark:group-hover:text-saffron-400 transition line-clamp-1 leading-snug">
                             {p.title}
                           </h3>
 
                           {/* ML Reasoning Pill */}
-                          <div className="mt-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200/80 text-[10px] text-amber-800 leading-tight">
+                          <div className="mt-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-[10px] text-amber-800 dark:text-amber-300 leading-tight">
                             <span className="font-bold">Reason:</span> {p.mlReason || `High affinity with ${p.category}`}
                           </div>
                         </div>
 
                         {/* Pricing & CTA */}
-                        <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 mt-2">
+                        <div className="pt-2 border-t border-gray-100 dark:border-stone-800 flex items-center justify-between gap-2 mt-2">
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-base font-black text-gray-900">
+                            <span className="text-base font-black text-gray-900 dark:text-stone-100">
                               ₹{price.toLocaleString()}
                             </span>
                             {originalPrice > price && (
-                              <del className="text-xs text-gray-400">₹{originalPrice.toLocaleString()}</del>
+                              <del className="text-xs text-gray-400 dark:text-stone-500">₹{originalPrice.toLocaleString()}</del>
                             )}
                           </div>
 
                           <div className="flex flex-col items-end">
                             {p.stock <= 0 && p._id.toString().length === 24 ? (
-                              <span className="px-2.5 py-1 bg-gray-100 text-gray-400 rounded-lg text-[10px] font-bold border border-gray-200">
+                              <span className="px-2.5 py-1 bg-gray-100 dark:bg-stone-800 text-gray-400 dark:text-stone-500 rounded-lg text-[10px] font-bold border border-gray-200 dark:border-stone-700">
                                 Sold Out
                               </span>
                             ) : cartQty > 0 ? (
@@ -571,7 +571,7 @@ const Home = () => {
                               <button
                                 type="button"
                                 onClick={(e) => handleAddClick(e, p)}
-                                className="px-3.5 py-1.5 bg-saffron-50 hover:bg-saffron-500 text-saffron-700 hover:text-white rounded-lg text-xs font-black uppercase tracking-wider border border-saffron-300 hover:border-transparent transition-all duration-200 flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
+                                className="px-3.5 py-1.5 bg-saffron-50 dark:bg-stone-800 hover:bg-saffron-500 dark:hover:bg-saffron-500 text-saffron-700 dark:text-saffron-300 hover:text-white rounded-lg text-xs font-black uppercase tracking-wider border border-saffron-300 dark:border-stone-700 hover:border-transparent transition-all duration-200 flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
                               >
                                 <span>ADD</span>
                                 <svg
@@ -597,24 +597,24 @@ const Home = () => {
 
           {/* Value Props */}
           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-3xl bg-saffron-50/50 border border-saffron-100 text-center">
+            <div className="p-8 rounded-3xl bg-saffron-50/50 dark:bg-stone-900 border border-saffron-100 dark:border-stone-800 text-center shadow-xs dark:shadow-md transition">
               <span className="text-4xl">🧘‍♂️</span>
-              <h3 className="text-lg font-bold text-gray-900 mt-4">Certified Instructors</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-stone-100 mt-4">Certified Instructors</h3>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2 leading-relaxed">
                 Learn from verified yoga masters and meditation guides across authentic lineages.
               </p>
             </div>
-            <div className="p-8 rounded-3xl bg-saffron-50/50 border border-saffron-100 text-center">
+            <div className="p-8 rounded-3xl bg-saffron-50/50 dark:bg-stone-900 border border-saffron-100 dark:border-stone-800 text-center shadow-xs dark:shadow-md transition">
               <span className="text-4xl">🌿</span>
-              <h3 className="text-lg font-bold text-gray-900 mt-4">Eco-Friendly Craft</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-stone-100 mt-4">Eco-Friendly Craft</h3>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2 leading-relaxed">
                 Handmade organic cork mats, brass singing bowls, and sustainably sourced malas.
               </p>
             </div>
-            <div className="p-8 rounded-3xl bg-saffron-50/50 border border-saffron-100 text-center">
+            <div className="p-8 rounded-3xl bg-saffron-50/50 dark:bg-stone-900 border border-saffron-100 dark:border-stone-800 text-center shadow-xs dark:shadow-md transition">
               <span className="text-4xl">📄</span>
-              <h3 className="text-lg font-bold text-gray-900 mt-4">Instant PDF Invoicing</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-stone-100 mt-4">Instant PDF Invoicing</h3>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2 leading-relaxed">
                 Permanent access to downloadable tax-compliant invoices and course enrollment receipts.
               </p>
             </div>

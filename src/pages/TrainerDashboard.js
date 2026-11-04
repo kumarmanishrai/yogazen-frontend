@@ -398,28 +398,28 @@ const TrainerDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/60 flex flex-col justify-between">
+    <div className="min-h-screen bg-gray-50/60 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between transition-colors duration-200">
       <div>
         <Navbar />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           
           {/* Welcome & Instructor Status Header */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-saffron-100 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-saffron-100 dark:border-stone-800 shadow-sm dark:shadow-xl mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-saffron-600 text-white flex items-center justify-center text-3xl font-black shadow-md shadow-saffron-600/20">
                 🧘‍♂️
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-stone-100">
                     {currentUser?.name || 'Instructor Portal'}
                   </h1>
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-saffron-100 text-saffron-800">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-saffron-100 dark:bg-saffron-950/80 text-saffron-800 dark:text-saffron-300 border border-transparent dark:border-saffron-800">
                     Trainer View
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-stone-400 mt-0.5">
                   Manage your course curriculums, schedule live sessions, and monitor student enrollments
                 </p>
               </div>
@@ -428,7 +428,7 @@ const TrainerDashboard = () => {
             <div className="flex items-center gap-3">
               <Link
                 to="/trainer/profile"
-                className="px-4 py-2 text-xs font-bold text-saffron-700 bg-saffron-50 hover:bg-saffron-100 border border-saffron-200 rounded-xl transition"
+                className="px-4 py-2 text-xs font-bold text-saffron-700 dark:text-saffron-300 bg-saffron-50 dark:bg-stone-800 hover:bg-saffron-100 dark:hover:bg-stone-700 border border-saffron-200 dark:border-stone-700 rounded-xl transition"
               >
                 ✏️ Edit Profile & Payout
               </Link>
@@ -443,14 +443,14 @@ const TrainerDashboard = () => {
 
           {/* Profile Completeness Alert Banner */}
           {!isProfileComplete && (
-            <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs">
+            <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-stone-900 dark:to-stone-900 border border-amber-200 dark:border-amber-800/40 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 flex items-center justify-center text-2xl shrink-0">
                   ⚠️
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-amber-900">Your Trainer Profile is Incomplete</h3>
-                  <p className="text-xs text-amber-700 mt-1 leading-relaxed max-w-2xl">
+                  <h3 className="text-base font-bold text-amber-900 dark:text-amber-300">Your Trainer Profile is Incomplete</h3>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed max-w-2xl">
                     To maintain quality training standards on YogaZen, trainers must complete their profile before adding or publishing courses. Please enter your <strong>Full Name</strong>, <strong>Contact Phone</strong>, <strong>Bio</strong>, and <strong>Training Specializations</strong>.
                   </p>
                 </div>
@@ -685,52 +685,52 @@ const TrainerDashboard = () => {
                   return (
                     <div
                       key={courseId}
-                      className="bg-white rounded-3xl border border-saffron-100/80 shadow-sm overflow-hidden transition"
+                      className="bg-white dark:bg-stone-900 rounded-3xl border border-saffron-100/80 dark:border-stone-800 shadow-sm overflow-hidden transition"
                     >
                       {/* Course Card Header */}
                       <div
                         onClick={() => navigate(`/trainer/courses/${courseId}`)}
-                        className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-white via-white to-saffron-50/20 hover:bg-saffron-50/30 transition cursor-pointer group"
+                        className="p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-white via-white to-saffron-50/20 dark:from-stone-900 dark:via-stone-900 dark:to-stone-900 hover:bg-saffron-50/30 dark:hover:bg-stone-800/60 transition cursor-pointer group"
                       >
                         <div className="space-y-1.5 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-saffron-100 text-saffron-800">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-saffron-100 dark:bg-saffron-950/80 text-saffron-800 dark:text-saffron-300 border border-transparent dark:border-saffron-800">
                               {course.category}
                             </span>
-                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-stone-800 text-gray-600 dark:text-stone-300 border border-transparent dark:border-stone-700">
                               {course.level}
                             </span>
-                            <span className="text-[10px] font-bold text-saffron-600 opacity-0 group-hover:opacity-100 transition">
+                            <span className="text-[10px] font-bold text-saffron-600 dark:text-saffron-400 opacity-0 group-hover:opacity-100 transition">
                               Click to open course studio →
                             </span>
                           </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-saffron-700 transition">
+                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-stone-100 group-hover:text-saffron-700 dark:group-hover:text-saffron-400 transition">
                             {courseIndex + 1}. {course.title}
                           </h3>
                           <div className="flex items-center gap-2 pt-0.5 text-xs">
                             <span className="text-amber-500 font-bold flex items-center gap-0.5">
                               ★ {course.rating ? course.rating.toFixed(1) : '5.0'}
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 dark:text-stone-400">
                               ({course.reviews?.length || course.reviewsCount || 0} reviews)
                             </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="text-gray-500">
+                            <span className="text-gray-300 dark:text-stone-600">•</span>
+                            <span className="text-gray-500 dark:text-stone-400">
                               👥 {course.enrolledCount || 0} enrolled
                             </span>
                           </div>
-                          <p className="text-xs text-gray-600 leading-relaxed max-w-3xl">
+                          <p className="text-xs text-gray-600 dark:text-stone-400 leading-relaxed max-w-3xl">
                             {course.description}
                           </p>
                         </div>
 
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-2 sm:gap-3 justify-between md:justify-end border-t md:border-0 pt-3 md:pt-0 flex-wrap"
+                          className="flex items-center gap-2 sm:gap-3 justify-between md:justify-end border-t border-gray-100 dark:border-stone-800 md:border-0 pt-3 md:pt-0 flex-wrap"
                         >
                           <div className="text-left md:text-right mr-2">
-                            <span className="text-[11px] text-gray-400 block">Course Price</span>
-                            <span className="text-lg font-extrabold text-saffron-600">
+                            <span className="text-[11px] text-gray-400 dark:text-stone-400 block">Course Price</span>
+                            <span className="text-lg font-extrabold text-saffron-600 dark:text-saffron-400">
                               {course.price > 0 ? `₹${course.price}` : 'Free'}
                             </span>
                           </div>
@@ -738,7 +738,7 @@ const TrainerDashboard = () => {
                           {/* Dedicated Course Studio & Classes Page */}
                           <Link
                             to={`/trainer/courses/${courseId}`}
-                            className="px-3 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                            className="px-3 py-2 bg-stone-900 dark:bg-stone-800 hover:bg-stone-800 dark:hover:bg-stone-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm border border-stone-800 dark:border-stone-700"
                             title="Open Course Studio with all upcoming and recorded classes"
                           >
                             <span>📹 Classes & Studio (→)</span>
@@ -747,7 +747,7 @@ const TrainerDashboard = () => {
                           {/* View public course page */}
                           <Link
                             to={`/courses/${courseId}`}
-                            className="px-3 py-2 bg-gray-100 hover:bg-saffron-50 text-gray-700 hover:text-saffron-700 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                            className="px-3 py-2 bg-gray-100 dark:bg-stone-800 hover:bg-saffron-50 dark:hover:bg-stone-700 text-gray-700 dark:text-stone-300 hover:text-saffron-700 dark:hover:text-saffron-400 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-transparent dark:border-stone-700"
                             title="Open course details page"
                           >
                             <span>👁️ Course Page</span>
@@ -764,7 +764,7 @@ const TrainerDashboard = () => {
                           {/* Accordion Expand / Collapse Button */}
                           <button
                             onClick={() => toggleCourseExpand(courseId)}
-                            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition"
+                            className="p-2 text-gray-400 dark:text-stone-400 hover:text-gray-700 dark:hover:text-stone-200 hover:bg-gray-100 dark:hover:bg-stone-800 rounded-xl transition"
                             title="Toggle Curriculum View"
                           >
                             <svg
@@ -783,22 +783,22 @@ const TrainerDashboard = () => {
 
                       {/* NESTED CLASSES LISTING */}
                       {expandedCourses[courseId] && (
-                        <div className="border-t border-gray-100 bg-gray-50/50 p-6 sm:p-7 space-y-4">
+                        <div className="border-t border-gray-100 dark:border-stone-800 bg-gray-50/50 dark:bg-stone-950 p-6 sm:p-7 space-y-4">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
+                            <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500 dark:text-stone-400">
                               Curriculum Classes ({courseClasses.length})
                             </h4>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-stone-500">
                               Total Duration: {courseClasses.reduce((sum, c) => sum + (c.duration ? parseInt(c.duration) || 45 : 45), 0)} mins
                             </span>
                           </div>
 
                           {courseClasses.length === 0 ? (
-                            <div className="p-6 rounded-2xl bg-white border border-dashed border-gray-200 text-center">
-                              <p className="text-xs text-gray-500">No classes in this course yet.</p>
+                            <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-dashed border-gray-200 dark:border-stone-800 text-center">
+                              <p className="text-xs text-gray-500 dark:text-stone-400">No classes in this course yet.</p>
                               <button
                                 onClick={() => openAddClassForCourse(courseId)}
-                                className="mt-2 text-xs font-bold text-saffron-600 hover:underline"
+                                className="mt-2 text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline"
                               >
                                 + Add the first class
                               </button>
@@ -810,22 +810,24 @@ const TrainerDashboard = () => {
                                 return (
                                   <div
                                     key={classId}
-                                    className={`bg-white p-4 sm:p-5 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
-                                      cls.isLive ? 'border-red-300 ring-2 ring-red-500/20' : 'border-gray-200/80 hover:border-saffron-200'
+                                    className={`bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                                      cls.isLive
+                                        ? 'border-red-300 dark:border-red-600 ring-2 ring-red-500/20'
+                                        : 'border-gray-200/80 dark:border-stone-800 hover:border-saffron-200 dark:hover:border-stone-700'
                                     }`}
                                   >
                                     <div className="flex items-start gap-3.5">
-                                      <div className="w-8 h-8 rounded-full bg-saffron-50 text-saffron-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                      <div className="w-8 h-8 rounded-full bg-saffron-50 dark:bg-stone-800 text-saffron-700 dark:text-saffron-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-saffron-200 dark:border-stone-700">
                                         #{classIndex + 1}
                                       </div>
                                       <div>
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <h5 className="text-sm font-bold text-gray-900">{cls.title}</h5>
+                                          <h5 className="text-sm font-bold text-gray-900 dark:text-stone-100">{cls.title}</h5>
                                           <span
                                             className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                                               cls.type === 'Live Stream'
-                                                ? 'bg-red-50 text-red-600 border border-red-200'
-                                                : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-900/40'
+                                                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40'
                                             }`}
                                           >
                                             {cls.type}
@@ -836,16 +838,16 @@ const TrainerDashboard = () => {
                                             </span>
                                           )}
                                           {cls.status === 'completed' && (
-                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40">
                                               ✓ Recorded
                                             </span>
                                           )}
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-0.5">{cls.description}</p>
-                                        <div className="flex items-center gap-4 text-[11px] text-gray-400 mt-2 font-medium">
+                                        <p className="text-xs text-gray-500 dark:text-stone-400 mt-0.5">{cls.description}</p>
+                                        <div className="flex items-center gap-4 text-[11px] text-gray-400 dark:text-stone-500 mt-2 font-medium">
                                           <span>⏱️ {cls.duration}</span>
                                           {cls.scheduledAt && (
-                                            <span className="text-saffron-700 font-semibold">
+                                            <span className="text-saffron-700 dark:text-saffron-400 font-semibold">
                                               📅 Scheduled: {formatDate(cls.scheduledAt)}
                                             </span>
                                           )}
@@ -853,7 +855,7 @@ const TrainerDashboard = () => {
                                       </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
+                                    <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-0 border-gray-100 dark:border-stone-800">
                                       {cls.type === 'Live Stream' && (
                                         <button
                                           type="button"
@@ -861,7 +863,7 @@ const TrainerDashboard = () => {
                                           className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${
                                             cls.isLive
                                               ? 'bg-red-600 hover:bg-red-700 text-white'
-                                              : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                              : 'bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                                           }`}
                                         >
                                           {cls.isLive ? 'End Stream ⏹' : 'Go Live 🔴'}
@@ -875,7 +877,7 @@ const TrainerDashboard = () => {
                                             classItem: cls
                                           })
                                         }
-                                        className="px-3 py-1.5 text-xs font-semibold text-gray-700 hover:text-saffron-600 bg-gray-50 hover:bg-saffron-50 rounded-xl transition flex items-center gap-1"
+                                        className="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 bg-gray-50 dark:bg-stone-800 hover:bg-saffron-50 dark:hover:bg-stone-700 rounded-xl transition flex items-center gap-1 border border-gray-200 dark:border-stone-700"
                                       >
                                         <span>▶ Studio Player</span>
                                       </button>

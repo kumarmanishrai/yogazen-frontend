@@ -105,21 +105,21 @@ const Courses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-nunito transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 pb-20">
         {/* Hero Banner */}
-        <section className="bg-gradient-to-b from-saffron-500/10 via-amber-500/5 to-transparent pt-10 pb-12 border-b border-saffron-100">
+        <section className="bg-gradient-to-b from-saffron-500/10 via-amber-500/5 to-transparent pt-10 pb-12 border-b border-saffron-100 dark:border-stone-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-saffron-100 text-saffron-800 border border-saffron-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-saffron-100 dark:bg-stone-800 text-saffron-800 dark:text-saffron-300 border border-saffron-200 dark:border-stone-700">
                 🧘 Sacred Practice • Verified Yogacharyas
               </span>
-              <h1 className="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight mt-3 leading-tight">
+              <h1 className="text-3xl sm:text-5xl font-black text-stone-900 dark:text-stone-100 tracking-tight mt-3 leading-tight">
                 Authentic Yoga & Breathwork Courses
               </h1>
-              <p className="text-sm sm:text-base text-stone-600 mt-3 leading-relaxed">
+              <p className="text-sm sm:text-base text-stone-600 dark:text-stone-400 mt-3 leading-relaxed">
                 Deepen your daily Sadhana with immersive video curriculums, alignment tutorials, guided meditation, and direct trainer reviews from certified practitioners.
               </p>
             </div>
@@ -132,7 +132,7 @@ const Courses = () => {
                   placeholder="Search courses by asana, pranayama, kundalini, trainer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-24 py-3 rounded-2xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-saffron-400 bg-white text-sm text-stone-800 placeholder-stone-400 shadow-xs"
+                  className="w-full pl-11 pr-24 py-3 rounded-2xl border border-stone-200 dark:border-stone-800 focus:outline-none focus:ring-2 focus:ring-saffron-400 bg-white dark:bg-stone-900 text-sm text-stone-800 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 shadow-xs"
                 />
                 <div className="absolute left-4 top-3.5 text-stone-400 pointer-events-none">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ const Courses = () => {
                     className={`px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer shadow-xs ${
                       isActive
                         ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                        : 'bg-white text-stone-600 hover:text-saffron-600 border border-stone-200'
+                        : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-stone-200 dark:border-stone-800'
                     }`}
                   >
                     {cat} {count > 0 && <span className={`ml-1 text-[10px] ${isActive ? 'text-amber-200' : 'text-stone-400'}`}>({count})</span>}
@@ -193,9 +193,9 @@ const Courses = () => {
             
             {/* Left Filter Sidebar */}
             <aside className="lg:col-span-1 space-y-6">
-              <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-6">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h3 className="text-sm font-extrabold text-stone-900 uppercase tracking-wider">
+              <div className="bg-white dark:bg-stone-900 p-6 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+                  <h3 className="text-sm font-extrabold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
                     Filters & Practice
                   </h3>
                   <button
@@ -255,7 +255,7 @@ const Courses = () => {
                 <div className="border-t border-stone-100 pt-5">
                   <div className="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/60 text-xs text-amber-900 space-y-1.5">
                     <div className="font-extrabold flex items-center gap-1.5 text-amber-800">
-                      <span>✨</span> YogaZen Promise
+                      <span>✓</span> YogaZen Promise
                     </div>
                     <p className="text-[11px] text-amber-700 leading-relaxed">
                       Lifetime access to all video modules, class updates, live Q&A sessions, and authentic completion certificates.
@@ -331,10 +331,10 @@ const Courses = () => {
                       <div
                         key={courseId}
                         onClick={() => navigate(`/courses/${courseId}`)}
-                        className="bg-white rounded-3xl border border-stone-200 hover:border-saffron-300 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
+                        className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 hover:border-saffron-300 dark:hover:border-saffron-500 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
                       >
                         {/* Course Thumbnail Image */}
-                        <div className="relative aspect-video w-full overflow-hidden bg-stone-100">
+                        <div className="relative aspect-video w-full overflow-hidden bg-stone-100 dark:bg-stone-950">
                           <img
                             src={course.thumbnail || 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80'}
                             alt={course.title}
@@ -373,23 +373,23 @@ const Courses = () => {
                           <div className="space-y-2">
                             {/* Trainer Info */}
                             <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full bg-saffron-100 text-saffron-700 text-[10px] font-bold flex items-center justify-center">
+                              <div className="w-5 h-5 rounded-full bg-saffron-100 dark:bg-stone-800 text-saffron-700 dark:text-saffron-300 text-[10px] font-bold flex items-center justify-center">
                                 🧘
                               </div>
-                              <span className="text-xs font-semibold text-stone-600 truncate">
+                              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400 truncate">
                                 {trainerName}
                               </span>
                             </div>
 
                             {/* Title */}
                             <Link to={`/courses/${courseId}`}>
-                              <h3 className="text-base font-extrabold text-stone-900 group-hover:text-saffron-600 transition line-clamp-2 leading-snug">
+                              <h3 className="text-base font-extrabold text-stone-900 dark:text-stone-100 group-hover:text-saffron-600 dark:group-hover:text-saffron-400 transition line-clamp-2 leading-snug">
                                 {course.title}
                               </h3>
                             </Link>
 
                             {/* Short Description */}
-                            <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed">
                               {course.description}
                             </p>
 
@@ -397,31 +397,31 @@ const Courses = () => {
                             <div className="flex items-center justify-between pt-1 text-xs">
                               <div className="flex items-center gap-1.5">
                                 {renderStars(ratingVal || 5)}
-                                <span className="font-extrabold text-stone-900 text-xs">
+                                <span className="font-extrabold text-stone-900 dark:text-stone-100 text-xs">
                                   {reviewsNum > 0 || ratingVal > 0 ? ratingVal.toFixed(1) : 'New'}
                                 </span>
-                                <span className="text-[10px] text-stone-400">
+                                <span className="text-[10px] text-stone-400 dark:text-stone-500">
                                   ({reviewsNum})
                                 </span>
                               </div>
-                              <span className="text-[11px] text-stone-500 font-medium">
+                              <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
                                 👥 {course.enrolledCount || 0} yogis
                               </span>
                             </div>
                           </div>
 
                           {/* Card Footer: Price & View CTA */}
-                          <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+                          <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between">
                             <div>
-                              <span className="text-[10px] text-stone-400 uppercase font-bold block">
+                              <span className="text-[10px] text-stone-400 dark:text-stone-500 uppercase font-bold block">
                                 Full Access Fee
                               </span>
                               <div className="flex items-baseline gap-1.5">
-                                <span className="text-lg font-black text-stone-900">
+                                <span className="text-lg font-black text-stone-900 dark:text-stone-100">
                                   ₹{course.price?.toLocaleString()}
                                 </span>
                                 {course.price > 0 && (
-                                  <span className="text-xs text-stone-400 line-through">
+                                  <span className="text-xs text-stone-400 dark:text-stone-500 line-through">
                                     ₹{Math.round(course.price * 1.5).toLocaleString()}
                                   </span>
                                 )}

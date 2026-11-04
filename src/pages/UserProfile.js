@@ -15,7 +15,8 @@ import {
   apiCancelOrder,
   apiRequestReturn,
   apiUpdateCourseProgress,
-  apiAddProductReview
+  apiAddProductReview,
+  apiGetEnrolledCourses
 } from '../services/api';
 
 const UserProfile = ({ defaultTab = 'orders' }) => {
@@ -394,18 +395,33 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
     }
   }, []);
 
+  // Fetch enrolled courses from backend
+  const fetchEnrolledCourses = useCallback(async () => {
+    try {
+      const res = await apiGetEnrolledCourses();
+      if (res?.enrolledCourses && Array.isArray(res.enrolledCourses)) {
+        setEnrolledCourses(res.enrolledCourses);
+      }
+    } catch (err) {
+      console.error('Failed to load enrolled courses:', err);
+    }
+  }, []);
+
   // Initial load and refetch when currentUser changes
   useEffect(() => {
     fetchOrders();
     fetchComplaints();
-  }, [currentUser, fetchOrders, fetchComplaints]);
+    fetchEnrolledCourses();
+  }, [currentUser, fetchOrders, fetchComplaints, fetchEnrolledCourses]);
 
-  // Refetch when switching to orders tab to guarantee fresh data
+  // Refetch when switching to orders or courses tab to guarantee fresh data
   useEffect(() => {
     if (activeTab === 'orders') {
       fetchOrders();
+    } else if (activeTab === 'courses') {
+      fetchEnrolledCourses();
     }
-  }, [activeTab, fetchOrders]);
+  }, [activeTab, fetchOrders, fetchEnrolledCourses]);
 
   // Sync state if currentUser changes or loads from session
   useEffect(() => {
@@ -656,39 +672,83 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
     );
   }
 
+  const courseOrders = orders.filter((o) => o.orderType === 'course');
+  const allMergedCourses = [
+    ...enrolledCourses.map((ec) => {
+      const c = ec.course || ec;
+      return {
+        id: ec.orderId || ec._id || c?._id || c?.id,
+        courseId: (c?._id || c?.id || c || '').toString(),
+        title: c?.title || 'Yoga Course',
+        instructor: c?.trainer?.name || 'YogaZen Acharya',
+        thumbnail: c?.thumbnail || 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
+        category: c?.category || 'Wellness',
+        level: c?.level || 'All Levels',
+        duration: c?.duration || '4 Weeks',
+        progress: ec.progress ?? (ec.courseProgress?.progressPercentage || 0),
+        completedClasses: ec.completedClasses || ec.courseProgress?.completedClasses || [],
+        enrolledDate: ec.enrolledOn ? new Date(ec.enrolledOn).toLocaleDateString() : 'Active Member',
+        invoiceId: ec.invoiceId || 'INV-COURSE',
+        classes: c?.classes || [],
+        rawCourse: c,
+        orderData: ec
+      };
+    }),
+    ...courseOrders.map((o) => ({
+      id: o._id,
+      courseId: (o.courseDetails?.course?._id || o.courseDetails?.course || o.courseDetails?.id || '').toString(),
+      title: o.courseDetails?.courseTitle || o.courseDetails?.title || 'Yoga Course',
+      instructor: o.courseDetails?.instructorName || 'YogaZen Acharya',
+      thumbnail: o.courseDetails?.thumbnail || 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=800&q=80',
+      category: o.courseDetails?.category || 'Wellness',
+      level: o.courseDetails?.level || 'All Levels',
+      duration: o.courseDetails?.duration || '4 Weeks',
+      progress: o.courseProgress?.progressPercentage || 0,
+      completedClasses: o.courseProgress?.completedClasses || [],
+      enrolledDate: new Date(o.createdAt).toLocaleDateString(),
+      invoiceId: o.invoiceId || o.orderNumber,
+      classes: o.courseDetails?.classes || [],
+      rawCourse: o.courseDetails,
+      orderData: o
+    }))
+  ].filter((v, i, a) => {
+    const myId = String(v.courseId || v.rawCourse?._id || v.rawCourse?.id || v.id || v._id);
+    return a.findIndex((t) => String(t.courseId || t.rawCourse?._id || t.rawCourse?.id || t.id || t._id) === myId) === i;
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50/60 flex flex-col justify-between">
+    <div className="min-h-screen bg-gray-50/60 dark:bg-stone-950 text-gray-900 dark:text-stone-100 flex flex-col justify-between transition-colors duration-200">
       <div>
         <Navbar />
 
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Header Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-saffron-100 shadow-sm mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-saffron-100 flex items-center justify-center text-saffron-700 text-2xl font-black shadow-inner">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-saffron-100 dark:border-stone-800 shadow-sm mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div className="w-20 h-20 rounded-full bg-saffron-100 dark:bg-stone-800 flex items-center justify-center text-saffron-700 dark:text-saffron-400 text-2xl font-black shadow-inner">
               {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div className="text-center sm:text-left flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold text-gray-900">{userInfo.name || 'Member'}</h1>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-saffron-700 bg-saffron-50 px-2.5 py-0.5 rounded-full border border-saffron-200 w-fit mx-auto sm:mx-0">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-stone-100">{userInfo.name || 'Member'}</h1>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-saffron-700 dark:text-saffron-300 bg-saffron-50 dark:bg-stone-800 px-2.5 py-0.5 rounded-full border border-saffron-200 dark:border-stone-700 w-fit mx-auto sm:mx-0">
                   Mindful Member
                 </span>
               </div>
-              <p className="text-sm text-gray-500">{userInfo.email}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {currentUser?.createdAt ? `Member since ${new Date(currentUser.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}` : 'Mindful Practitioner'} • {enrolledCourses.length} active courses • {addresses.length} saved addresses
+              <p className="text-sm text-gray-500 dark:text-stone-400">{userInfo.email}</p>
+              <p className="text-xs text-gray-400 dark:text-stone-500 mt-1">
+                {currentUser?.createdAt ? `Member since ${new Date(currentUser.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}` : 'Mindful Practitioner'} • {allMergedCourses.length} active courses • {addresses.length} saved addresses
               </p>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 border-b border-gray-200">
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 border-b border-gray-200 dark:border-stone-800">
             <button
               onClick={() => setActiveTab('orders')}
               className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                 activeTab === 'orders'
                   ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                  : 'bg-white text-gray-600 hover:text-saffron-600 border border-gray-200'
+                  : 'bg-white dark:bg-stone-900 text-gray-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-gray-200 dark:border-stone-800'
               }`}
             >
               📦 Previous Orders ({orders.length})
@@ -698,7 +758,7 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
               className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                 activeTab === 'complaints'
                   ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                  : 'bg-white text-gray-600 hover:text-saffron-600 border border-gray-200'
+                  : 'bg-white dark:bg-stone-900 text-gray-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-gray-200 dark:border-stone-800'
               }`}
             >
               🎫 Support Tickets ({complaints.length})
@@ -708,7 +768,7 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
               className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                  : 'bg-white text-gray-600 hover:text-saffron-600 border border-gray-200'
+                  : 'bg-white dark:bg-stone-900 text-gray-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-gray-200 dark:border-stone-800'
               }`}
             >
               👤 Personal Details
@@ -718,7 +778,7 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
               className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                 activeTab === 'addresses'
                   ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                  : 'bg-white text-gray-600 hover:text-saffron-600 border border-gray-200'
+                  : 'bg-white dark:bg-stone-900 text-gray-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-gray-200 dark:border-stone-800'
               }`}
             >
               📍 Shipping Addresses ({addresses.length})
@@ -728,10 +788,10 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
               className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                 activeTab === 'courses'
                   ? 'bg-saffron-500 text-white shadow-md shadow-saffron-500/20'
-                  : 'bg-white text-gray-600 hover:text-saffron-600 border border-gray-200'
+                  : 'bg-white dark:bg-stone-900 text-gray-600 dark:text-stone-300 hover:text-saffron-600 dark:hover:text-saffron-400 border border-gray-200 dark:border-stone-800'
               }`}
             >
-              🧘 My Courses & Invoices ({enrolledCourses.length})
+              🧘 My Courses ({allMergedCourses.length})
             </button>
           </div>
 
@@ -831,7 +891,7 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
                 <div className="bg-white rounded-3xl p-12 text-center border border-saffron-100 shadow-sm space-y-4">
                   <span className="text-5xl block">
                     {ordersFilter === 'cancelled'
-                      ? '✨'
+                      ? '🕊️'
                       : ordersFilter === 'ongoing'
                       ? '🚚'
                       : ordersFilter === 'completed'
@@ -2107,7 +2167,25 @@ const UserProfile = ({ defaultTab = 'orders' }) => {
                   <div className="lg:col-span-2 p-6 border-b lg:border-b-0 lg:border-r border-gray-100 space-y-4">
                     {/* Real Video Player Embed */}
                     <div className="aspect-video w-full rounded-2xl bg-black relative flex flex-col items-center justify-center text-white overflow-hidden shadow-inner group">
-                      {ytId ? (
+                      {currentLesson?.scheduledAt && new Date(currentLesson.scheduledAt) > new Date() && !currentLesson?.isLive ? (
+                        <div className="p-8 text-center space-y-3 max-w-md mx-auto">
+                          <span className="text-4xl block">🗓️</span>
+                          <h4 className="text-sm font-bold text-stone-100">{currentLesson?.title}</h4>
+                          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                            Upcoming Scheduled Class
+                          </span>
+                          <p className="text-xs text-stone-300 leading-relaxed">
+                            This session is scheduled for{' '}
+                            <strong>
+                              {new Date(currentLesson.scheduledAt).toLocaleString('en-IN', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short'
+                              })}
+                            </strong>
+                            . Video streaming will unlock automatically when the scheduled session starts.
+                          </p>
+                        </div>
+                      ) : ytId ? (
                         <iframe
                           src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1`}
                           title={currentLesson?.title || 'Yoga Lesson'}

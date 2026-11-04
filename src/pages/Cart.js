@@ -629,7 +629,7 @@ const Cart = () => {
                     {/* Trust Badges */}
                     <div className="pt-2 text-[10px] text-gray-400 space-y-1 text-center border-t border-gray-50">
                       <p>🔒 256-Bit Encrypted Secure Checkout</p>
-                      <p>✨ Free returns & exchanges within 7 days</p>
+                      <p>✓ Free returns & exchanges within 7 days</p>
                       <p>🚚 Fast Dispatch via BlueDart & Delhivery</p>
                     </div>
                   </div>

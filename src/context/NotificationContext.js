@@ -38,7 +38,9 @@ export const NotificationProvider = ({ children }) => {
     message = 'Are you sure you want to proceed?',
     confirmText = 'Confirm',
     cancelText = 'Cancel',
-    type = 'danger'
+    type = 'danger',
+    onConfirm = null,
+    onCancel = null
   } = {}) => {
     return new Promise((resolve) => {
       setConfirmModal({
@@ -47,8 +49,13 @@ export const NotificationProvider = ({ children }) => {
         confirmText,
         cancelText,
         type,
-        resolve: (val) => {
+        resolve: async (val) => {
           setConfirmModal(null);
+          if (val && typeof onConfirm === 'function') {
+            await onConfirm();
+          } else if (!val && typeof onCancel === 'function') {
+            await onCancel();
+          }
           resolve(val);
         }
       });
@@ -60,7 +67,8 @@ export const NotificationProvider = ({ children }) => {
       value={{
         showNotification,
         dismissNotification,
-        showConfirm
+        showConfirm,
+        showConfirmation: showConfirm
       }}
     >
       {children}
@@ -131,9 +139,9 @@ export const NotificationProvider = ({ children }) => {
 
       {/* Modern Confirmation Modal (Replacing window.confirm) */}
       {confirmModal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-stone-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 dark:border-stone-800 space-y-5 animate-in zoom-in-95 duration-200"
             role="dialog"
             aria-modal="true"
           >
@@ -141,17 +149,17 @@ export const NotificationProvider = ({ children }) => {
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-xl font-bold ${
                   confirmModal.type === 'danger'
-                    ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                    : 'bg-amber-50 text-amber-600 border border-amber-100'
+                    ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40'
+                    : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40'
                 }`}
               >
                 {confirmModal.type === 'danger' ? '🗑️' : '⚠️'}
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-base font-black text-gray-900 leading-tight">
+                <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">
                   {confirmModal.title}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed font-medium">
+                <p className="text-xs text-gray-500 dark:text-stone-400 mt-1.5 leading-relaxed font-medium">
                   {confirmModal.message}
                 </p>
               </div>
@@ -161,7 +169,7 @@ export const NotificationProvider = ({ children }) => {
               <button
                 type="button"
                 onClick={() => confirmModal.resolve(false)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs font-bold transition"
+                className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-stone-700 text-gray-600 dark:text-stone-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-stone-800 text-xs font-bold transition"
               >
                 {confirmModal.cancelText}
               </button>
