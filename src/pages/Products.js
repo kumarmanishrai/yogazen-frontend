@@ -67,6 +67,24 @@ const Products = () => {
   const handleAddClick = async (e, prod) => {
     e.preventDefault();
     e.stopPropagation();
+    const availableStock = prod.stock ?? 0;
+    if (availableStock <= 0) {
+      showNotification('This product is currently out of stock.', 'error');
+      return;
+    }
+    const inCart = cart.find(
+      (it) => (it.product?._id || it.product || it.productId)?.toString() === prod._id.toString()
+    );
+    if (inCart) {
+      if (inCart.quantity >= 10) {
+        showNotification('Maximum limit of 10 units reached for this product.', 'info');
+        return;
+      }
+      if (inCart.quantity >= availableStock) {
+        showNotification(`Maximum available stock (${availableStock}) reached.`, 'info');
+        return;
+      }
+    }
     let varietyData = {};
     if (prod.varieties && prod.varieties.length > 0) {
       const firstInStock = prod.varieties.find((v) => v.stock > 0) || prod.varieties[0];
@@ -92,7 +110,11 @@ const Products = () => {
   const handleIncrement = async (e, prod, currentQty) => {
     e.preventDefault();
     e.stopPropagation();
-    const maxStock = prod.stock || 99;
+    if (currentQty >= 10) {
+      showNotification('Maximum 10 units of a product allowed per order.', 'info');
+      return;
+    }
+    const maxStock = prod.stock ?? 0;
     if (currentQty >= maxStock) {
       showNotification(`Maximum available stock (${maxStock}) reached.`, 'info');
       return;
@@ -599,8 +621,13 @@ const Products = () => {
                                   <button
                                     type="button"
                                     onClick={(e) => handleIncrement(e, product, cartQty)}
-                                    title="Increase quantity"
-                                    className="w-7 h-full flex items-center justify-center hover:bg-saffron-600 active:scale-90 transition font-black text-sm cursor-pointer select-none"
+                                    disabled={cartQty >= 10 || cartQty >= (product.stock ?? 0)}
+                                    title={cartQty >= 10 ? 'Maximum 10 units allowed' : cartQty >= (product.stock ?? 0) ? 'Maximum stock reached' : 'Increase quantity'}
+                                    className={`w-7 h-full flex items-center justify-center transition font-black text-sm select-none ${
+                                      cartQty >= 10 || cartQty >= (product.stock ?? 0)
+                                        ? 'opacity-40 cursor-not-allowed bg-stone-200'
+                                        : 'hover:bg-saffron-600 active:scale-90 cursor-pointer'
+                                    }`}
                                   >
                                     +
                                   </button>

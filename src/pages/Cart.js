@@ -76,7 +76,8 @@ const Cart = () => {
   }, [isLoggedIn, isSyncing, cart.length]);
 
   const handleQuantityChange = async (item, delta) => {
-    const newQty = item.quantity + delta;
+    const currentQty = item.quantity || 1;
+    const newQty = currentQty + delta;
     if (newQty <= 0) {
       const confirmed = await showConfirm({
         title: 'Remove Item',
@@ -89,7 +90,18 @@ const Cart = () => {
         await removeFromCart(item.product?._id || item.product);
       }
     } else {
-      await updateCartItem(item.product?._id || item.product, newQty);
+      if (delta > 0) {
+        if (currentQty >= 10) {
+          showNotification('Maximum 10 units of a product allowed per order.', 'info');
+          return;
+        }
+        const availableStock = item.availableStock !== undefined ? item.availableStock : (item.product?.stock ?? 99);
+        if (currentQty >= availableStock) {
+          showNotification(`Maximum available stock (${availableStock}) reached.`, 'info');
+          return;
+        }
+      }
+      await updateCartItem(item.product?._id || item.product, Math.min(10, newQty));
     }
   };
 
@@ -441,9 +453,9 @@ const Cart = () => {
                               </span>
                               <button
                                 onClick={() => handleQuantityChange(item, 1)}
-                                disabled={isCartLoading || item.quantity >= item.availableStock || isOutOfStock}
+                                disabled={isCartLoading || item.quantity >= 10 || item.quantity >= item.availableStock || isOutOfStock}
                                 className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                                title="Increase quantity"
+                                title={item.quantity >= 10 ? 'Maximum 10 units allowed' : item.quantity >= item.availableStock ? 'Stock limit reached' : 'Increase quantity'}
                               >
                                 +
                               </button>

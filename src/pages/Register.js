@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PasswordRequirementsModal, { validatePassword } from '../components/PasswordRequirementsModal';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const Register = () => {
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordChecks, setPasswordChecks] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const { registerUser } = useAuth();
@@ -32,8 +35,11 @@ const Register = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    const { isValid, checks } = validatePassword(formData.password);
+    if (!isValid) {
+      setPasswordChecks(checks);
+      setShowPasswordModal(true);
+      setError('Password does not satisfy all security requirements.');
       return;
     }
 
@@ -191,6 +197,13 @@ const Register = () => {
           </Link>
         </p>
       </div>
+
+      {/* Password Requirements Modal Popup */}
+      <PasswordRequirementsModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        checks={passwordChecks}
+      />
     </div>
   );
 };

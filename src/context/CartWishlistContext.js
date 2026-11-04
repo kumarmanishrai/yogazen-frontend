@@ -213,6 +213,7 @@ export const CartWishlistProvider = ({ children }) => {
 
   // Add to Cart (Guest + Logged In)
   const addToCart = async (productId, quantity = 1, varietyData = {}, productObj = null) => {
+    const clampedQuantity = Math.min(10, Math.max(1, quantity));
     if (!isLoggedIn || role !== 'user') {
       const currentGuest = loadGuestCart();
       const pIdStr = productId ? productId.toString() : '';
@@ -224,13 +225,18 @@ export const CartWishlistProvider = ({ children }) => {
 
       let updatedCart;
       if (existingIdx > -1) {
+        const existingItem = currentGuest[existingIdx];
+        const availableStock = existingItem.product?.stock !== undefined ? existingItem.product.stock : 99;
+        const newQty = Math.min(10, Math.min(availableStock, existingItem.quantity + clampedQuantity));
         updatedCart = [...currentGuest];
         updatedCart[existingIdx] = {
-          ...updatedCart[existingIdx],
-          quantity: updatedCart[existingIdx].quantity + quantity
+          ...existingItem,
+          quantity: newQty
         };
       } else {
         const prod = productObj || {};
+        const availableStock = prod.stock !== undefined ? prod.stock : 99;
+        const initialQty = Math.min(10, Math.min(availableStock, clampedQuantity));
         const itemProduct = {
           _id: prod._id || pIdStr,
           title: prod.title || varietyData.productTitle || 'Mindful Product',
@@ -239,12 +245,12 @@ export const CartWishlistProvider = ({ children }) => {
           thumbnail: prod.thumbnail || (prod.images && prod.images[0]) || varietyData.varietyImage || varietyData.image || '',
           images: prod.images || (prod.thumbnail ? [prod.thumbnail] : []),
           category: prod.category || varietyData.category || 'Wellness',
-          stock: prod.stock !== undefined ? prod.stock : 99
+          stock: availableStock
         };
         const effPrice = Number(varietyData.price || itemProduct.discountPrice || itemProduct.price || 999);
         const newItem = {
           product: itemProduct,
-          quantity,
+          quantity: initialQty,
           varietySku: varietyData.varietySku || '',
           varietyName: varietyData.varietyName || '',
           price: effPrice,
@@ -260,7 +266,7 @@ export const CartWishlistProvider = ({ children }) => {
     }
 
     try {
-      const res = await apiAddToCart(productId, quantity, varietyData);
+      const res = await apiAddToCart(productId, clampedQuantity, varietyData);
       if (res?.success) {
         setCart(res.cart || []);
         if (res.summary) setSummary(res.summary);
@@ -274,12 +280,15 @@ export const CartWishlistProvider = ({ children }) => {
 
   // Update Cart Item Quantity (Guest + Logged In)
   const updateCartItem = async (productId, quantity) => {
+    const clampedQuantity = Math.min(10, Math.max(1, quantity));
     if (!isLoggedIn || role !== 'user') {
       const currentGuest = loadGuestCart();
       const pIdStr = productId.toString();
       const updatedCart = currentGuest.map((it) => {
         if ((it.product?._id || it.product || it.productId)?.toString() === pIdStr) {
-          return { ...it, quantity: Math.max(1, quantity) };
+          const availableStock = it.product?.stock !== undefined ? it.product.stock : 99;
+          const finalQty = Math.min(10, Math.min(availableStock, clampedQuantity));
+          return { ...it, quantity: Math.max(1, finalQty) };
         }
         return it;
       });
@@ -290,7 +299,7 @@ export const CartWishlistProvider = ({ children }) => {
     }
 
     try {
-      const res = await apiUpdateCartItem(productId, quantity);
+      const res = await apiUpdateCartItem(productId, clampedQuantity);
       if (res?.success) {
         setCart(res.cart || []);
         if (res.summary) setSummary(res.summary);
