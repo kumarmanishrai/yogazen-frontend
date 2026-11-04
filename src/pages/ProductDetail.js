@@ -70,6 +70,14 @@ const ProductDetail = () => {
 
   const productRef = useRef(product);
   const selectedVarietyRef = useRef(selectedVariety);
+  const varietyScrollRef = useRef(null);
+
+  const scrollVarieties = (direction) => {
+    if (varietyScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220;
+      varietyScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     productRef.current = product;
@@ -339,54 +347,116 @@ const ProductDetail = () => {
 
               {/* Interactive Variety / Color / Style Selector */}
               {product.varieties && product.varieties.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-gray-800">
-                      Option / Variety:{' '}
-                      <span className="text-saffron-700 font-semibold">
+                <div className="space-y-2.5 pt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-extrabold text-gray-800 shrink-0">
+                        Option / Variety:
+                      </span>
+                      <span className="text-saffron-700 font-bold truncate">
                         {selectedVariety?.name || 'Choose an option'}
                       </span>
-                    </span>
+                    </div>
                     {selectedVariety && (
-                      <span className="text-[10px] text-gray-400 font-mono">
+                      <span className="text-[10px] text-gray-400 font-mono shrink-0 pl-2">
                         SKU: {selectedVariety.sku}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {product.varieties.map((v) => {
-                      const isSelected = selectedVariety?.sku === v.sku;
-                      const isVarOutOfStock = v.stock <= 0;
-                      const isVarLowStock = v.stock > 0 && v.stock < 10;
+                  <div className="relative group">
+                    {/* Left Scroll Chevron */}
+                    {product.varieties.length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => scrollVarieties('left')}
+                        className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-700 hover:text-saffron-600 hover:border-saffron-400 hover:scale-105 transition"
+                        title="Scroll left"
+                        aria-label="Scroll left"
+                      >
+                        ‹
+                      </button>
+                    )}
 
-                      return (
-                        <button
-                          key={v.sku}
-                          onClick={() => handleSelectVariety(v)}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition text-left cursor-pointer flex flex-col gap-0.5 ${
-                            isSelected
-                              ? 'border-saffron-500 bg-saffron-50/70 text-saffron-900 shadow-2xs'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          } ${isVarOutOfStock ? 'opacity-60 bg-gray-50' : ''}`}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate max-w-[170px]">{v.name}</span>
-                            {isSelected && <span className="text-saffron-600">✓</span>}
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] text-gray-500 font-normal">
-                            <span>₹{v.price}</span>
-                            {isVarOutOfStock ? (
-                              <span className="text-red-500 font-bold">Out of stock</span>
-                            ) : isVarLowStock ? (
-                              <span className="text-amber-600 font-bold">Only {v.stock} left</span>
-                            ) : (
-                              <span className="text-emerald-600 font-semibold">{v.stock} in stock</span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                    {/* Horizontal Varieties Rail */}
+                    <div
+                      ref={varietyScrollRef}
+                      className="flex items-stretch gap-2.5 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x overscroll-x-contain"
+                      style={{ scrollbarWidth: 'thin' }}
+                    >
+                      {product.varieties.map((v) => {
+                        const isSelected = selectedVariety?.sku === v.sku;
+                        const isVarOutOfStock = v.stock <= 0;
+                        const isVarLowStock = v.stock > 0 && v.stock < 10;
+
+                        return (
+                          <button
+                            key={v.sku}
+                            type="button"
+                            onClick={() => handleSelectVariety(v)}
+                            className={`snap-start shrink-0 w-[160px] sm:w-[175px] p-2.5 rounded-2xl text-left transition cursor-pointer border flex flex-col justify-between gap-2 relative ${
+                              isSelected
+                                ? 'border-saffron-500 bg-saffron-50/70 ring-2 ring-saffron-400/50 shadow-xs'
+                                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/70 text-gray-800'
+                            } ${isVarOutOfStock ? 'opacity-60 bg-gray-50' : ''}`}
+                          >
+                            {/* Top row: Swatch preview + Selected/Stock status pill */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="w-10 h-10 rounded-xl bg-saffron-50 border border-saffron-100 overflow-hidden shrink-0 flex items-center justify-center">
+                                {v.image || product.thumbnail || product.images?.[0] ? (
+                                  <img
+                                    src={v.image || product.thumbnail || product.images[0]}
+                                    alt={v.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-base">🧘</span>
+                                )}
+                              </div>
+                              {isSelected ? (
+                                <span className="w-5 h-5 rounded-full bg-saffron-500 text-white text-[10px] flex items-center justify-center font-black shrink-0 shadow-xs">
+                                  ✓
+                                </span>
+                              ) : isVarOutOfStock ? (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-red-100 text-red-700 font-bold uppercase tracking-wider shrink-0">
+                                  Sold Out
+                                </span>
+                              ) : null}
+                            </div>
+
+                            {/* Bottom row: Name, Price, and Live Stock */}
+                            <div className="space-y-0.5 w-full">
+                              <p className="text-xs font-bold text-gray-900 truncate" title={v.name}>
+                                {v.name}
+                              </p>
+                              <div className="flex items-center justify-between text-[11px] pt-0.5">
+                                <span className="font-extrabold text-saffron-700">₹{v.price.toLocaleString()}</span>
+                                {isVarOutOfStock ? (
+                                  <span className="text-[10px] text-red-500 font-semibold">0 stock</span>
+                                ) : isVarLowStock ? (
+                                  <span className="text-[10px] text-amber-600 font-bold">{v.stock} left</span>
+                                ) : (
+                                  <span className="text-[10px] text-emerald-600 font-medium">{v.stock} in stock</span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Scroll Chevron */}
+                    {product.varieties.length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => scrollVarieties('right')}
+                        className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-700 hover:text-saffron-600 hover:border-saffron-400 hover:scale-105 transition"
+                        title="Scroll right"
+                        aria-label="Scroll right"
+                      >
+                        ›
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

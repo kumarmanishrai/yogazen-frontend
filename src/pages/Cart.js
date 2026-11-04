@@ -218,13 +218,13 @@ const Cart = () => {
       <div>
         <Navbar />
 
-        <main className="max-w-6xl mx-auto px-4 py-10">
+        <main className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+          <div className="flex flex-row items-center justify-between pb-6 border-b border-gray-200 gap-3">
             <div>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🛒</span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-3xl">🛒</span>
+                <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
                   Your Shopping Cart
                 </h1>
               </div>
@@ -247,7 +247,7 @@ const Cart = () => {
                     clearCart();
                   }
                 }}
-                className="self-start sm:self-auto text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl transition border border-red-100"
+                className="shrink-0 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition border border-red-100"
               >
                 Clear Cart
               </button>
@@ -279,7 +279,7 @@ const Cart = () => {
             </div>
           ) : cart.length === 0 ? (
             /* Empty Cart State */
-            <div className="mt-12 p-12 max-w-md mx-auto bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
+            <div className="mt-12 p-8 sm:p-12 max-w-md mx-auto bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
               <div className="w-20 h-20 bg-saffron-50 rounded-full flex items-center justify-center mx-auto text-4xl mb-4">
                 🛍️
               </div>
@@ -310,7 +310,7 @@ const Cart = () => {
                       </span>
                     )}
                   </span>
-                  <span className="font-bold text-gray-500">{freeShipProgress}%</span>
+                  <span className="font-bold text-gray-500 shrink-0 ml-2">{freeShipProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
@@ -355,8 +355,8 @@ const Cart = () => {
                         } shadow-xs flex flex-col sm:flex-row gap-4 sm:items-center justify-between`}
                       >
                         {/* Product Image & Title */}
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-saffron-50/60 border border-saffron-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                        <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-saffron-50/60 border border-saffron-100 shrink-0 overflow-hidden flex items-center justify-center">
                             {item.varietyImage || product.thumbnail || product.images?.[0] ? (
                               <img
                                 src={item.varietyImage || product.thumbnail || product.images[0]}
@@ -368,15 +368,15 @@ const Cart = () => {
                             )}
                           </div>
 
-                          <div className="space-y-1">
+                          <div className="space-y-1 min-w-0 flex-1">
                             <span className="inline-block px-2 py-0.5 text-[10px] font-bold text-saffron-700 bg-saffron-50 rounded-md">
                               {product.category || 'Mindful Product'}
                             </span>
-                            <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
+                            <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug line-clamp-2">
                               {product.title || 'Wellness Product'}
                             </h3>
                             {item.varietyName && (
-                              <p className="text-xs text-gray-500 font-medium">
+                              <p className="text-xs text-gray-500 font-medium truncate">
                                 Option: <span className="text-gray-800 font-semibold">{item.varietyName}</span>
                               </p>
                             )}
@@ -414,9 +414,9 @@ const Cart = () => {
                         </div>
 
                         {/* Quantity Counter & Actions */}
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                          {/* Item Subtotal */}
-                          <div className="text-left sm:text-right">
+                        <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-center gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 w-full sm:w-auto">
+                          {/* Desktop Item Subtotal */}
+                          <div className="hidden sm:block text-right">
                             <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">
                               Total
                             </span>
@@ -425,45 +425,57 @@ const Cart = () => {
                             </span>
                           </div>
 
-                          {/* Stepper */}
-                          <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
-                            <button
-                              onClick={() => handleQuantityChange(item, -1)}
-                              disabled={isCartLoading}
-                              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition font-bold text-sm disabled:opacity-50"
-                              title={item.quantity === 1 ? 'Remove from cart' : 'Decrease quantity'}
-                            >
-                              -
-                            </button>
-                            <span className="w-8 text-center text-xs font-bold text-gray-800">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => handleQuantityChange(item, 1)}
-                              disabled={isCartLoading || item.quantity >= item.availableStock || isOutOfStock}
-                              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Increase quantity"
-                            >
-                              +
-                            </button>
+                          <div className="flex items-center gap-3">
+                            {/* Stepper */}
+                            <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 overflow-hidden shrink-0">
+                              <button
+                                onClick={() => handleQuantityChange(item, -1)}
+                                disabled={isCartLoading}
+                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition font-bold text-sm disabled:opacity-50"
+                                title={item.quantity === 1 ? 'Remove from cart' : 'Decrease quantity'}
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center text-xs font-bold text-gray-800">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => handleQuantityChange(item, 1)}
+                                disabled={isCartLoading || item.quantity >= item.availableStock || isOutOfStock}
+                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            {/* Mobile Item Subtotal */}
+                            <div className="sm:hidden text-left">
+                              <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold block leading-none">
+                                Total
+                              </span>
+                              <span className="text-xs font-extrabold text-gray-900">
+                                ₹{(item.itemTotal || (item.unitPrice || 0) * item.quantity).toLocaleString()}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Action Links */}
-                          <div className="flex items-center gap-3 text-xs">
+                          <div className="flex items-center gap-2.5 sm:gap-3 text-xs shrink-0">
                             <button
                               onClick={() => handleMoveToWishlist(item)}
-                              className="text-gray-400 hover:text-saffron-600 transition font-medium"
+                              className="text-gray-500 hover:text-saffron-600 transition font-medium flex items-center gap-1"
                               title="Save to Wishlist"
                             >
-                              💛 Save
+                              <span>💛</span> <span>Save</span>
                             </button>
-                            <span className="text-gray-300">|</span>
+                            <span className="text-gray-200">|</span>
                             <button
                               onClick={() => removeFromCart(product._id || item.product)}
-                              className="text-gray-400 hover:text-red-600 transition font-medium"
+                              className="text-gray-500 hover:text-red-600 transition font-medium flex items-center gap-1"
                               title="Remove item"
                             >
-                              🗑️ Remove
+                              <span>🗑️</span> <span>Remove</span>
                             </button>
                           </div>
                         </div>
@@ -658,7 +670,7 @@ const Cart = () => {
             {orderPlacedSuccess ? (
               /* Order Confirmation Celebration */
               <div className="text-center py-6 space-y-4">
-                <div className="w-18 h-18 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-4xl mx-auto shadow-inner">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-3xl sm:text-4xl mx-auto shadow-inner">
                   🎉
                 </div>
                 <h3 className="text-2xl font-black text-gray-900">Order Placed Successfully!</h3>

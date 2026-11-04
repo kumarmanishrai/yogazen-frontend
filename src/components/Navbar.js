@@ -46,7 +46,7 @@ const Navbar = () => {
 
       {/* Main Navbar */}
       <div className="w-full px-3 sm:px-5 lg:px-6">
-        <div className="flex items-center justify-between h-16 sm:h-18 gap-3 sm:gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4">
           
           {/* Left: Brand Logo */}
           <div className="flex-shrink-0 flex items-center">
