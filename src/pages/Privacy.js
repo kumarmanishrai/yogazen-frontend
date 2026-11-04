@@ -154,8 +154,11 @@ const Privacy = () => {
               please reach out through our <Link to="/contact" className="text-saffron-600 font-semibold underline">Contact Us</Link> portal
               or write to our Data Protection Officer at:
             </p>
-            <div className="text-xs text-gray-700 font-mono bg-white p-3 rounded-lg border border-gray-200 inline-block">
-              privacy@yogazen.com • YogaZen Sanctuary, Rishikesh, Uttarakhand, India
+            <div className="text-xs text-gray-700 dark:text-stone-300 font-mono bg-white dark:bg-stone-800 p-3 rounded-lg border border-gray-200 dark:border-stone-700 inline-block">
+              <a href="mailto:www.yogazen@gmail.com" className="text-saffron-600 dark:text-saffron-400 hover:underline">
+                www.yogazen@gmail.com
+              </a>{' '}
+              • YogaZen Sanctuary, Rishikesh, Uttarakhand, India
             </div>
           </section>
 

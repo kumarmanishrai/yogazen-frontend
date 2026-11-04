@@ -19,10 +19,18 @@ const Footer = () => {
             <p className="text-sm text-gray-500 dark:text-stone-400 leading-relaxed">
               Curating authentic yogic traditions, ethical wellness gear, and transformative training sessions for your holistic journey.
             </p>
-            <div>
-              <Link to="/about" className="text-xs font-semibold text-saffron-600 hover:text-saffron-700 underline underline-offset-2">
-                About YogaZen →
-              </Link>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-gray-500 dark:text-stone-400">
+                <span>✉️</span>
+                <a href="mailto:www.yogazen@gmail.com" className="font-semibold text-saffron-600 dark:text-saffron-400 hover:underline">
+                  www.yogazen@gmail.com
+                </a>
+              </div>
+              <div>
+                <Link to="/about" className="text-xs font-semibold text-saffron-600 hover:text-saffron-700 underline underline-offset-2">
+                  About YogaZen →
+                </Link>
+              </div>
             </div>
           </div>
 

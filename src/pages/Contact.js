@@ -9,7 +9,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I access my enrolled yoga courses?',
-    a: 'Once enrolled, courses are instantly accessible from your User Profile under the "Enrolled Courses" tab with downloadable invoices and video stream links.'
+    a: 'Once enrolled, courses are instantly accessible from your User Profile or My Courses portal with permanent curriculum access, video streams, and downloadable invoices.'
   },
   {
     q: 'What is your return & exchange policy?',
@@ -17,223 +17,171 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How can I become an instructor on YogaZen?',
-    a: 'Certified yoga and meditation trainers can apply directly by visiting the Trainer Registration portal.'
+    a: 'Certified yoga and meditation trainers can apply directly by visiting the Trainer Registration portal or emailing us at www.yogazen@gmail.com.'
   }
 ];
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    inquiryType: 'Store Order & Delivery',
-    subject: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittedFeedback, setSubmittedFeedback] = useState(null);
+  const [copied, setCopied] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
-
-    setIsSubmitting(true);
-    // Simulate inquiry dispatch
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmittedFeedback('Thank you for reaching out! A YogaZen care specialist will reply within 24 hours.');
-      setFormData({
-        name: '',
-        email: '',
-        inquiryType: 'Store Order & Delivery',
-        subject: '',
-        message: ''
-      });
-      setTimeout(() => setSubmittedFeedback(null), 5000);
-    }, 700);
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('www.yogazen@gmail.com');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-between font-nunito">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col justify-between font-nunito transition-colors duration-200">
       <div>
         <Navbar />
 
         {/* Hero Section */}
-        <section className="bg-gradient-to-b from-saffron-50/60 to-white py-14 sm:py-20 border-b border-saffron-100/60">
+        <section className="bg-gradient-to-b from-saffron-500/10 via-amber-500/5 to-transparent py-14 sm:py-20 border-b border-saffron-100 dark:border-stone-800">
           <div className="max-w-4xl mx-auto px-4 text-center space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-saffron-100 text-saffron-800 border border-saffron-200">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-saffron-100 dark:bg-stone-800 text-saffron-800 dark:text-saffron-300 border border-saffron-200 dark:border-stone-700">
               <span>💬</span> We Are Here to Support Your Practice
             </span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-              Contact <span className="text-saffron-600">YogaZen Care</span>
+            <h1 className="text-3xl sm:text-5xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              Contact <span className="text-saffron-600 dark:text-saffron-400">YogaZen Care</span>
             </h1>
-            <p className="text-xs sm:text-sm text-gray-600 max-w-xl mx-auto">
-              Have questions regarding our authentic products, shipping timelines, live courses, or trainer onboarding?
-              Our dedicated mindful support team is here to assist.
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-xl mx-auto leading-relaxed">
+              Have questions regarding our authentic wellness gear, shipment dispatch timelines, live courses, or trainer collaborations?
+              Reach out directly to our mindful team.
             </p>
           </div>
         </section>
 
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+          
+          {/* Primary Featured Email Contact Card */}
+          <div className="bg-gradient-to-br from-amber-50/80 via-white to-saffron-50/60 dark:from-stone-900 dark:via-stone-900 dark:to-stone-950 rounded-3xl p-8 sm:p-12 border border-saffron-200/80 dark:border-stone-800 shadow-sm dark:shadow-xl text-center space-y-6">
+            <div className="w-16 h-16 rounded-3xl bg-saffron-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md shadow-saffron-500/20">
+              ✉️
+            </div>
             
-            {/* Left: Contact Form (7 Cols) */}
-            <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-2xs space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Send Us a Message</h2>
-                <p className="text-xs text-gray-500 mt-1">Fill out the form below and we will respond to your email promptly.</p>
-              </div>
-
-              {submittedFeedback && (
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
-                  <span>✅</span>
-                  <span>{submittedFeedback}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Your Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Priya Sharma"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Your Email Address *</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. priya@example.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Inquiry Topic</label>
-                    <select
-                      value={formData.inquiryType}
-                      onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500 bg-white"
-                    >
-                      <option value="Store Order & Delivery">Store Order & Delivery</option>
-                      <option value="Product Variety & Sizing">Product Variety & Sizing</option>
-                      <option value="Yoga Course & Live Stream">Yoga Course & Live Stream</option>
-                      <option value="Trainer Partnership Application">Trainer Partnership</option>
-                      <option value="Wholesale & Studio Bulk Orders">Studio Bulk Orders</option>
-                      <option value="Other Feedback">Other Feedback</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Subject</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Question about Singing Bowl overtones"
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Message *</label>
-                  <textarea
-                    rows="4"
-                    required
-                    placeholder="How can we help your yoga practice or wellness journey today?"
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-saffron-500"
-                  ></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
+            <div className="space-y-2 max-w-xl mx-auto">
+              <span className="text-xs uppercase font-extrabold tracking-widest text-saffron-700 dark:text-saffron-400">
+                Official Support Email
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 dark:text-stone-100">
+                <a
+                  href="mailto:www.yogazen@gmail.com"
+                  className="hover:text-saffron-600 dark:hover:text-saffron-400 underline decoration-saffron-300 dark:decoration-saffron-700 underline-offset-4 transition"
                 >
-                  {isSubmitting ? 'Sending Message...' : 'Send Message to YogaZen Care →'}
-                </button>
-              </form>
+                  www.yogazen@gmail.com
+                </a>
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed pt-1">
+                For order support, return requests, course curriculum inquiries, trainer onboarding, or general queries, write directly to our care team.
+              </p>
             </div>
 
-            {/* Right: Direct Contact Details & Info (5 Cols) */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="p-6 sm:p-8 rounded-3xl bg-saffron-50/50 border border-saffron-100 space-y-6">
-                <div>
-                  <h3 className="text-base font-extrabold text-gray-900">Direct Support Channels</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Reach out via email, phone, or visit our central depot.</p>
-                </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <a
+                href="mailto:www.yogazen@gmail.com"
+                className="px-6 py-3 bg-saffron-500 hover:bg-saffron-600 active:bg-saffron-700 text-white rounded-2xl text-xs font-bold transition shadow-md shadow-saffron-500/25 inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>✉️</span>
+                <span>Send Direct Email</span>
+              </a>
 
-                <div className="space-y-4 text-xs">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">📧</span>
-                    <div>
-                      <span className="font-bold text-gray-900 block">Email Support</span>
-                      <a href="mailto:care@yogazen.com" className="text-saffron-600 hover:underline">
-                        care@yogazen.com
-                      </a>
-                      <span className="text-gray-400 block text-[11px]">Average response: within 4 hours</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">📞</span>
-                    <div>
-                      <span className="font-bold text-gray-900 block">Phone & WhatsApp Hotline</span>
-                      <span className="text-gray-700 font-medium">+91 98765 43210</span>
-                      <span className="text-gray-400 block text-[11px]">Mon – Sat: 7:00 AM – 8:00 PM IST</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">🪷</span>
-                    <div>
-                      <span className="font-bold text-gray-900 block">Spiritual Sanctuary & Lineage Hub</span>
-                      <p className="text-gray-600 leading-relaxed">
-                        YogaZen Ashram Lane, Tapovan, Rishikesh, Uttarakhand 249192, India
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">📦</span>
-                    <div>
-                      <span className="font-bold text-gray-900 block">Warehouse Fulfillment Depot</span>
-                      <p className="text-gray-600 leading-relaxed">
-                        Sector 4B, Prayagraj Eco Logistics Park, Uttar Pradesh 211001 (WH-PRAYAG-B2)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick FAQ Box */}
-              <div className="p-6 rounded-3xl bg-white border border-gray-200 space-y-4">
-                <h3 className="text-sm font-bold text-gray-900">Frequently Asked Questions</h3>
-                <div className="space-y-3 divide-y divide-gray-100 text-xs">
-                  {FAQ_ITEMS.map((item, idx) => (
-                    <div key={idx} className="pt-2.5 first:pt-0">
-                      <p className="font-bold text-gray-800 mb-1">{item.q}</p>
-                      <p className="text-gray-500 leading-relaxed">{item.a}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={handleCopyEmail}
+                className="px-6 py-3 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs font-bold transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>📋</span>
+                <span>{copied ? 'Copied to Clipboard! ✓' : 'Copy Email Address'}</span>
+              </button>
             </div>
 
+            <div className="pt-2 text-[11px] text-stone-500 dark:text-stone-400 flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Average response window: within 2 to 4 hours</span>
+            </div>
           </div>
+
+          {/* Direct Support Channels Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Channel 1: Phone Hotline */}
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-3xl border border-stone-200/90 dark:border-stone-800 shadow-2xs space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-stone-800 text-amber-800 dark:text-amber-400 flex items-center justify-center text-xl">
+                📞
+              </div>
+              <h3 className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
+                Phone & WhatsApp Hotline
+              </h3>
+              <p className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                +91 98765 43210
+              </p>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">
+                Available Monday – Saturday from 7:00 AM to 8:00 PM IST for urgent order assistance.
+              </p>
+            </div>
+
+            {/* Channel 2: Rishikesh Sanctuary */}
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-3xl border border-stone-200/90 dark:border-stone-800 shadow-2xs space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-saffron-100 dark:bg-stone-800 text-saffron-800 dark:text-saffron-400 flex items-center justify-center text-xl">
+                🪷
+              </div>
+              <h3 className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
+                Spiritual Lineage Hub
+              </h3>
+              <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                YogaZen Ashram Lane, Tapovan, Rishikesh, Uttarakhand 249192, India
+              </p>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                Certified Vedic curriculum studio & instructor workshop centre.
+              </p>
+            </div>
+
+            {/* Channel 3: Fulfillment Depot */}
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-3xl border border-stone-200/90 dark:border-stone-800 shadow-2xs space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-stone-800 text-emerald-800 dark:text-emerald-400 flex items-center justify-center text-xl">
+                📦
+              </div>
+              <h3 className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
+                Fulfillment Depot
+              </h3>
+              <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                Sector 4B, Prayagraj Eco Logistics Park, Uttar Pradesh 211001
+              </p>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                Central distribution center for pan-India courier dispatch and verified returns.
+              </p>
+            </div>
+          </div>
+
+          {/* Frequently Asked Questions */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-8 border border-stone-200/90 dark:border-stone-800 shadow-2xs space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                Frequently Asked Questions
+              </h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                Quick answers to common questions about orders, courses, and instructor applications.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {FAQ_ITEMS.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 rounded-2xl bg-stone-50/80 dark:bg-stone-800/60 border border-stone-200/60 dark:border-stone-700/60 space-y-1.5"
+                >
+                  <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                    <span className="text-saffron-500">Q.</span>
+                    <span>{item.q}</span>
+                  </h4>
+                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed pl-4">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </main>
       </div>
 
@@ -243,4 +191,3 @@ const Contact = () => {
 };
 
 export default Contact;
-
